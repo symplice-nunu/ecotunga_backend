@@ -1,22 +1,44 @@
 const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
 
 exports.register = async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
+    console.log('Registration attempt for:', { name, email });
+    
     const existingUser = await db('users').where({ email }).first();
     if (existingUser) {
       return res.status(400).json({ message: 'Email already exists' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    await db('users').insert({ name, email, password: hashedPassword });
-
+    const id = uuidv4();
+    
+    console.log('Attempting to insert user with ID:', id);
+    
+    const insertData = {
+      id,
+      name,
+      email,
+      password: hashedPassword
+    };
+    
+    console.log('Insert data:', { ...insertData, password: '[REDACTED]' });
+    
+    await db('users').insert(insertData);
+    
+    console.log('User registered successfully');
     res.status(201).json({ message: 'User registered successfully' });
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    console.error('Registration error:', err);
+    res.status(500).json({ 
+      message: 'Server error', 
+      error: err.message,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
   }
 };
 
