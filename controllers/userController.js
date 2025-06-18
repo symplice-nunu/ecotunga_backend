@@ -93,6 +93,114 @@ const updateUser = async (req, res) => {
   }
 };
 
+const updateProfile = async (req, res) => {
+  const userId = req.user.id; // Get user ID from auth middleware
+  const {
+    email,
+    name,
+    last_name,
+    gender,
+    phone_number,
+    ubudehe_category,
+    district,
+    sector,
+    cell,
+    street
+  } = req.body;
+
+  try {
+    // Check if user exists
+    const user = await db('users').where({ id: userId }).first();
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if email is already taken by another user
+    if (email && email !== user.email) {
+      const existingUser = await db('users').where({ email }).first();
+      if (existingUser) {
+        return res.status(400).json({ message: 'Email already exists' });
+      }
+    }
+
+    // Update the user profile
+    await db('users')
+      .where({ id: userId })
+      .update({
+        email: email || user.email,
+        name: name || user.name,
+        last_name,
+        gender,
+        phone_number,
+        ubudehe_category,
+        district,
+        sector,
+        cell,
+        street,
+        updated_at: db.fn.now()
+      });
+
+    // Get the updated user
+    const updatedUser = await db('users')
+      .where({ id: userId })
+      .select(
+        'id', 
+        'name', 
+        'email', 
+        'last_name',
+        'gender',
+        'phone_number',
+        'ubudehe_category',
+        'district',
+        'sector',
+        'cell',
+        'street',
+        'created_at',
+        'updated_at'
+      )
+      .first();
+
+    res.json(updatedUser);
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ message: 'Error updating profile' });
+  }
+};
+
+const getProfile = async (req, res) => {
+  const userId = req.user.id; // Get user ID from auth middleware
+
+  try {
+    const user = await db('users')
+      .where({ id: userId })
+      .select(
+        'id', 
+        'name', 
+        'email', 
+        'last_name',
+        'gender',
+        'phone_number',
+        'ubudehe_category',
+        'district',
+        'sector',
+        'cell',
+        'street',
+        'created_at',
+        'updated_at'
+      )
+      .first();
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    res.status(500).json({ message: 'Error fetching profile' });
+  }
+};
+
 const generateUsersPDF = async (req, res) => {
   try {
     const users = await knex('users').select('*');
@@ -262,5 +370,7 @@ module.exports = {
   getUserById,
   deleteUser,
   updateUser,
+  updateProfile,
+  getProfile,
   generateUsersPDF
 }; 
