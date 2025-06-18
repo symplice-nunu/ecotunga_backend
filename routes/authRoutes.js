@@ -10,7 +10,7 @@ router.post('/login', authController.login);
 
 // Protected routes
 router.get('/profile', verifyToken, authController.profile);
-router.post('/logout', verifyToken, authController.logout); // <- Make sure this is defined
+router.post('/logout', verifyToken, authController.logout);
 
 module.exports = router;
 
