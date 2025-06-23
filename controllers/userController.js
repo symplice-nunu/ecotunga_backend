@@ -4,7 +4,7 @@ const knex = require('../config/db');
 
 const getAllUsers = async (req, res) => {
   try {
-    const users = await db('users').select('id', 'name', 'email', 'created_at');
+    const users = await db('users').select('id', 'name', 'email', 'role', 'created_at');
     res.json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -18,7 +18,7 @@ const getUserById = async (req, res) => {
   try {
     const user = await db('users')
       .where({ id: userId })
-      .select('id', 'name', 'email', 'created_at')
+      .select('id', 'name', 'email', 'role', 'created_at')
       .first();
       
     if (!user) {
@@ -54,7 +54,7 @@ const deleteUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
   const { userId } = req.params;
-  const { name, email } = req.body;
+  const { name, email, role } = req.body;
 
   try {
     // Check if user exists
@@ -77,13 +77,14 @@ const updateUser = async (req, res) => {
       .update({
         name,
         email,
+        role: role || user.role,
         updated_at: db.fn.now()
       });
 
     // Get the updated user
     const updatedUser = await db('users')
       .where({ id: userId })
-      .select('id', 'name', 'email', 'created_at')
+      .select('id', 'name', 'email', 'role', 'created_at')
       .first();
 
     res.json(updatedUser);
@@ -105,7 +106,8 @@ const updateProfile = async (req, res) => {
     district,
     sector,
     cell,
-    street
+    street,
+    role
   } = req.body;
 
   try {
@@ -137,6 +139,7 @@ const updateProfile = async (req, res) => {
         sector,
         cell,
         street,
+        role: role || user.role,
         updated_at: db.fn.now()
       });
 
@@ -155,6 +158,7 @@ const updateProfile = async (req, res) => {
         'sector',
         'cell',
         'street',
+        'role',
         'created_at',
         'updated_at'
       )
@@ -185,6 +189,7 @@ const getProfile = async (req, res) => {
         'sector',
         'cell',
         'street',
+        'role',
         'created_at',
         'updated_at'
       )
@@ -365,6 +370,51 @@ const generateUsersPDF = async (req, res) => {
   }
 };
 
+const getUsersCount = async (req, res) => {
+  try {
+    const count = await db('users').count('id as total').first();
+    res.json({ count: parseInt(count.total) });
+  } catch (error) {
+    console.error('Error counting users:', error);
+    res.status(500).json({ message: 'Error counting users' });
+  }
+};
+
+const getDashboardStats = async (req, res) => {
+  try {
+    // Get user count
+    const userCount = await db('users').count('id as total').first();
+    
+    // Get waste collection counts by status
+    const wasteCollectionStats = await db('waste_collection')
+      .select('status')
+      .count('* as count')
+      .groupBy('status');
+    
+    // Get total waste collections
+    const totalWasteCollections = await db('waste_collection').count('id as total').first();
+    
+    // Get companies count
+    const companiesCount = await db('companies').count('id as total').first();
+    
+    // Transform waste collection stats into a more usable format
+    const wasteStats = {};
+    wasteCollectionStats.forEach(stat => {
+      wasteStats[stat.status] = parseInt(stat.count);
+    });
+    
+    res.json({
+      users: parseInt(userCount.total),
+      totalWasteCollections: parseInt(totalWasteCollections.total),
+      companies: parseInt(companiesCount.total),
+      wasteCollectionsByStatus: wasteStats
+    });
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    res.status(500).json({ message: 'Error fetching dashboard statistics' });
+  }
+};
+
 module.exports = {
   getAllUsers,
   getUserById,
@@ -372,5 +422,7 @@ module.exports = {
   updateUser,
   updateProfile,
   getProfile,
-  generateUsersPDF
+  generateUsersPDF,
+  getUsersCount,
+  getDashboardStats
 }; 

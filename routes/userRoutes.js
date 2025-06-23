@@ -7,13 +7,21 @@ const {
   updateUser, 
   updateProfile,
   getProfile,
-  generateUsersPDF 
+  generateUsersPDF,
+  getUsersCount,
+  getDashboardStats
 } = require('../controllers/userController');
 const auth = require('../middleware/authMiddleware');
 const wasteCollectionController = require('../controllers/wasteCollectionController');
 
 // Get all users (protected route)
 router.get('/', auth, getAllUsers);
+
+// Get users count (protected route)
+router.get('/count', auth, getUsersCount);
+
+// Get dashboard statistics (protected route)
+router.get('/stats', auth, getDashboardStats);
 
 // Generate PDF of users (protected route)
 router.get('/pdf', auth, generateUsersPDF);
