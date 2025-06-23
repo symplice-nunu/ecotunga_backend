@@ -1,14 +1,61 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const { testSMTPConnection } = require('./services/emailService');
+
+// Test email configuration on startup
+console.log('🔧 Testing email configuration...');
+testSMTPConnection().then(result => {
+  if (result.success) {
+    console.log('✅ Email configuration is working properly');
+  } else {
+    console.log('⚠️  Email configuration has issues:', result.error);
+    console.log('📧 Emails may not be sent. Check your .env file and SMTP settings.');
+  }
+});
+
 const app = express();
 
+// CORS configuration - more permissive for development
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'http://localhost:3001',
+      'http://127.0.0.1:3001',
+      'http://localhost:5001',
+      'http://127.0.0.1:5001'
+    ];
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
 
 // Debug middleware to log requests
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
+  console.log('Origin:', req.headers.origin);
+  console.log('Headers:', req.headers);
   next();
 });
 
@@ -29,6 +76,16 @@ app.use('/api/users', userRoutes);
 const companyRoutes = require('./routes/companyRoutes');
 console.log('Mounting company routes...');
 app.use('/api/companies', companyRoutes);
+
+// Waste collection routes
+const wasteCollectionRoutes = require('./routes/wasteCollectionRoutes');
+console.log('Mounting waste collection routes...');
+app.use('/api/waste-collections', wasteCollectionRoutes);
+
+// Payment routes
+const paymentRoutes = require('./routes/paymentRoutes');
+console.log('Mounting payment routes...');
+app.use('/api/payments', paymentRoutes);
 
 // Test the route mounting
 app.get('/api/test', (req, res) => {
@@ -65,7 +122,7 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   console.log('Available routes:');
@@ -80,5 +137,11 @@ app.listen(PORT, () => {
   console.log('- POST /api/companies/register');
   console.log('- GET /api/companies');
   console.log('- GET /api/companies/:id');
+  console.log('- POST /api/waste-collections');
+  console.log('- GET /api/waste-collections/user');
+  console.log('- GET /api/waste-collections/next-pickup');
+  console.log('- GET /api/waste-collections/admin/all');
+  console.log('- PUT /api/waste-collections/admin/:id/approve');
+  console.log('- PUT /api/waste-collections/admin/:id/deny');
   console.log('- GET /api/test');
 });

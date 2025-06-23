@@ -13,6 +13,9 @@ router.get('/', companyController.getAllCompanies);
 // Register a new company
 router.post('/register', companyController.register);
 
+// Update company by email
+router.put('/update-by-email', companyController.updateByEmail);
+
 // Get company by ID (must be last because it has a parameter)
 router.get('/:id', companyController.getCompanyById);
 

@@ -1,4 +1,4 @@
-const knex = require('../config/database');
+const db = require('../config/db');
 
 const companyController = {
     // Register a new company
@@ -23,13 +23,13 @@ const companyController = {
             }
 
             // Check if company with email already exists
-            const existingCompany = await knex('companies').where({ email }).first();
+            const existingCompany = await db('companies').where({ email }).first();
             if (existingCompany) {
                 return res.status(400).json({ error: 'Company with this email already exists' });
             }
 
             // Insert new company
-            const [companyId] = await knex('companies').insert({
+            const [companyId] = await db('companies').insert({
                 name,
                 email,
                 phone,
@@ -42,7 +42,7 @@ const companyController = {
                 amount_per_month
             });
 
-            const newCompany = await knex('companies').where({ id: companyId }).first();
+            const newCompany = await db('companies').where({ id: companyId }).first();
             
             return res.status(201).json({
                 message: 'Company registered successfully',
@@ -54,10 +54,47 @@ const companyController = {
         }
     },
 
+    // Update company by email
+    async updateByEmail(req, res) {
+        try {
+            const { email, phone, district, sector, cell, village, street, amount_per_month } = req.body;
+
+            // Check if company exists
+            const existingCompany = await db('companies').where({ email }).first();
+            if (!existingCompany) {
+                return res.status(404).json({ error: 'Company not found' });
+            }
+
+            // Update company information
+            await db('companies')
+                .where({ email })
+                .update({
+                    phone: phone || existingCompany.phone,
+                    district: district || existingCompany.district,
+                    sector: sector || existingCompany.sector,
+                    cell: cell || existingCompany.cell,
+                    village: village || existingCompany.village,
+                    street: street || existingCompany.street,
+                    amount_per_month: amount_per_month || existingCompany.amount_per_month,
+                    updated_at: db.fn.now()
+                });
+
+            const updatedCompany = await db('companies').where({ email }).first();
+            
+            return res.json({
+                message: 'Company updated successfully',
+                company: updatedCompany
+            });
+        } catch (error) {
+            console.error('Error updating company:', error);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    },
+
     // Get all companies
     async getAllCompanies(req, res) {
         try {
-            const companies = await knex('companies').select('*');
+            const companies = await db('companies').select('*');
             return res.json(companies);
         } catch (error) {
             console.error('Error fetching companies:', error);
@@ -69,7 +106,7 @@ const companyController = {
     async getCompanyById(req, res) {
         try {
             const { id } = req.params;
-            const company = await knex('companies').where({ id }).first();
+            const company = await db('companies').where({ id }).first();
             
             if (!company) {
                 return res.status(404).json({ error: 'Company not found' });
