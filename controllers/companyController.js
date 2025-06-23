@@ -14,7 +14,10 @@ const companyController = {
                 cell,
                 village,
                 street,
-                amount_per_month
+                amount_per_month,
+                ubudehe_category,
+                gender,
+                last_name
             } = req.body;
 
             // Validate required fields
@@ -39,7 +42,10 @@ const companyController = {
                 cell,
                 village,
                 street,
-                amount_per_month
+                amount_per_month,
+                ubudehe_category,
+                gender,
+                last_name
             });
 
             const newCompany = await db('companies').where({ id: companyId }).first();
@@ -57,7 +63,19 @@ const companyController = {
     // Update company by email
     async updateByEmail(req, res) {
         try {
-            const { email, phone, district, sector, cell, village, street, amount_per_month } = req.body;
+            const { 
+                email, 
+                phone, 
+                district, 
+                sector, 
+                cell, 
+                village, 
+                street, 
+                amount_per_month,
+                ubudehe_category,
+                gender,
+                last_name
+            } = req.body;
 
             // Check if company exists
             const existingCompany = await db('companies').where({ email }).first();
@@ -76,6 +94,9 @@ const companyController = {
                     village: village || existingCompany.village,
                     street: street || existingCompany.street,
                     amount_per_month: amount_per_month || existingCompany.amount_per_month,
+                    ubudehe_category: ubudehe_category || existingCompany.ubudehe_category,
+                    gender: gender || existingCompany.gender,
+                    last_name: last_name || existingCompany.last_name,
                     updated_at: db.fn.now()
                 });
 
@@ -87,6 +108,88 @@ const companyController = {
             });
         } catch (error) {
             console.error('Error updating company:', error);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    },
+
+    // Update company profile (for waste collectors and recycling centers)
+    async updateProfile(req, res) {
+        try {
+            // Get user email from database using user ID from JWT token
+            const user = await db('users').where({ id: req.user.id }).select('email').first();
+            if (!user) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+            
+            const userEmail = user.email;
+            const {
+                phone,
+                district,
+                sector,
+                cell,
+                village,
+                street,
+                amount_per_month,
+                ubudehe_category,
+                gender,
+                last_name
+            } = req.body;
+
+            // Check if company exists
+            const existingCompany = await db('companies').where({ email: userEmail }).first();
+            if (!existingCompany) {
+                return res.status(404).json({ error: 'Company not found' });
+            }
+
+            // Update company information
+            await db('companies')
+                .where({ email: userEmail })
+                .update({
+                    phone: phone || existingCompany.phone,
+                    district: district || existingCompany.district,
+                    sector: sector || existingCompany.sector,
+                    cell: cell || existingCompany.cell,
+                    village: village || existingCompany.village,
+                    street: street || existingCompany.street,
+                    amount_per_month: amount_per_month || existingCompany.amount_per_month,
+                    ubudehe_category: ubudehe_category || existingCompany.ubudehe_category,
+                    gender: gender || existingCompany.gender,
+                    last_name: last_name || existingCompany.last_name,
+                    updated_at: db.fn.now()
+                });
+
+            const updatedCompany = await db('companies').where({ email: userEmail }).first();
+            
+            return res.json({
+                message: 'Company profile updated successfully',
+                company: updatedCompany
+            });
+        } catch (error) {
+            console.error('Error updating company profile:', error);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    },
+
+    // Get company profile (for waste collectors and recycling centers)
+    async getProfile(req, res) {
+        try {
+            // Get user email from database using user ID from JWT token
+            const user = await db('users').where({ id: req.user.id }).select('email').first();
+            if (!user) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+            
+            const userEmail = user.email;
+            
+            const company = await db('companies').where({ email: userEmail }).first();
+            
+            if (!company) {
+                return res.status(404).json({ error: 'Company not found' });
+            }
+
+            return res.json(company);
+        } catch (error) {
+            console.error('Error fetching company profile:', error);
             return res.status(500).json({ error: 'Internal server error' });
         }
     },

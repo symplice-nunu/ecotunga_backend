@@ -7,7 +7,7 @@ exports.register = async (req, res) => {
   const { name, email, password, role } = req.body;
 
   // Validate role
-  const validRoles = ['user', 'waste_collector', 'recycling_center'];
+  const validRoles = ['user', 'waste_collector', 'recycling_center', 'admin'];
   let userRole = role;
   if (!validRoles.includes(userRole)) {
     console.error('Invalid role received:', userRole);

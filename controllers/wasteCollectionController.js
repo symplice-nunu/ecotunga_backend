@@ -124,6 +124,20 @@ exports.getUserWasteCollections = async (req, res) => {
   try {
     const user_id = req.user.id;
     
+    console.log('🔍 getUserWasteCollections called for user:', user_id);
+    
+    // First, let's check if the user exists and get their details
+    const user = await db('users').where('id', user_id).select('id', 'email', 'role').first();
+    console.log('👤 User details:', user);
+    
+    // Check if there are any waste collections at all
+    const allCollections = await db('waste_collection').select('id', 'user_id', 'name', 'email', 'status');
+    console.log('📊 All waste collections in database:', allCollections);
+    
+    // Check collections for this specific user
+    const userCollections = allCollections.filter(c => c.user_id === user_id);
+    console.log('📊 Collections for this user:', userCollections);
+    
     const collections = await db('waste_collection')
       .leftJoin('companies', 'waste_collection.company_id', 'companies.id')
       .where('waste_collection.user_id', user_id)
@@ -135,9 +149,19 @@ exports.getUserWasteCollections = async (req, res) => {
       )
       .orderBy('waste_collection.created_at', 'desc');
 
+    console.log('📊 Final query result - Found collections:', collections.length);
+    console.log('📊 Collections data:', collections.map(c => ({
+      id: c.id,
+      customer_name: c.name,
+      customer_email: c.email,
+      status: c.status,
+      pickup_date: c.pickup_date,
+      user_id: c.user_id
+    })));
+
     res.json(collections);
   } catch (error) {
-    console.error(error);
+    console.error('❌ Error in getUserWasteCollections:', error);
     res.status(500).json({ error: 'Failed to fetch waste collections' });
   }
 };
