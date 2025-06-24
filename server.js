@@ -82,6 +82,16 @@ const wasteCollectionRoutes = require('./routes/wasteCollectionRoutes');
 console.log('Mounting waste collection routes...');
 app.use('/api/waste-collections', wasteCollectionRoutes);
 
+// Community events routes
+const communityEventRoutes = require('./routes/communityEventRoutes');
+console.log('Mounting community event routes...');
+app.use('/api/community-events', communityEventRoutes);
+
+// Education materials routes
+const educationMaterialRoutes = require('./routes/educationMaterialRoutes');
+console.log('Mounting education material routes...');
+app.use('/api/education-materials', educationMaterialRoutes);
+
 // Payment routes
 const paymentRoutes = require('./routes/paymentRoutes');
 console.log('Mounting payment routes...');
