@@ -11,6 +11,7 @@ exports.createWasteCollection = async (req, res) => {
       email,
       phone_number,
       ubudehe_category,
+      house_number,
       district,
       sector,
       cell,
@@ -22,7 +23,10 @@ exports.createWasteCollection = async (req, res) => {
     } = req.body;
     const user_id = req.user.id;
 
-    const [id] = await db('waste_collection').insert({
+    console.log('createWasteCollection called with data:', req.body);
+    console.log('house_number from request:', house_number);
+
+    const insertData = {
       user_id,
       name,
       last_name,
@@ -30,6 +34,7 @@ exports.createWasteCollection = async (req, res) => {
       email,
       phone_number,
       ubudehe_category,
+      house_number,
       district,
       sector,
       cell,
@@ -38,7 +43,13 @@ exports.createWasteCollection = async (req, res) => {
       pickup_date,
       time_slot,
       notes
-    });
+    };
+
+    console.log('Insert data being sent to database:', insertData);
+
+    const [id] = await db('waste_collection').insert(insertData);
+
+    console.log('Waste collection created with ID:', id);
 
     // Get company information for email
     let companyInfo = {};
@@ -70,6 +81,7 @@ exports.createWasteCollection = async (req, res) => {
       email,
       phone_number,
       ubudehe_category,
+      house_number,
       district,
       sector,
       cell,

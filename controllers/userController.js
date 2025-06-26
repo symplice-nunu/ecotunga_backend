@@ -103,12 +103,16 @@ const updateProfile = async (req, res) => {
     gender,
     phone_number,
     ubudehe_category,
+    house_number,
     district,
     sector,
     cell,
     street,
     role
   } = req.body;
+
+  console.log('updateProfile called with data:', req.body);
+  console.log('house_number from request:', house_number);
 
   try {
     // Check if user exists
@@ -125,23 +129,28 @@ const updateProfile = async (req, res) => {
       }
     }
 
+    const updateData = {
+      email: email || user.email,
+      name: name || user.name,
+      last_name,
+      gender,
+      phone_number,
+      ubudehe_category,
+      house_number,
+      district,
+      sector,
+      cell,
+      street,
+      role: role || user.role,
+      updated_at: db.fn.now()
+    };
+
+    console.log('Update data being sent to database:', updateData);
+
     // Update the user profile
     await db('users')
       .where({ id: userId })
-      .update({
-        email: email || user.email,
-        name: name || user.name,
-        last_name,
-        gender,
-        phone_number,
-        ubudehe_category,
-        district,
-        sector,
-        cell,
-        street,
-        role: role || user.role,
-        updated_at: db.fn.now()
-      });
+      .update(updateData);
 
     // Get the updated user
     const updatedUser = await db('users')
@@ -154,6 +163,7 @@ const updateProfile = async (req, res) => {
         'gender',
         'phone_number',
         'ubudehe_category',
+        'house_number',
         'district',
         'sector',
         'cell',
@@ -163,6 +173,9 @@ const updateProfile = async (req, res) => {
         'updated_at'
       )
       .first();
+
+    console.log('Updated user from database:', updatedUser);
+    console.log('house_number in updated user:', updatedUser.house_number);
 
     res.json(updatedUser);
   } catch (error) {
@@ -185,6 +198,7 @@ const getProfile = async (req, res) => {
         'gender',
         'phone_number',
         'ubudehe_category',
+        'house_number',
         'district',
         'sector',
         'cell',
