@@ -7,10 +7,10 @@ const FLUTTERWAVE_API_URL = 'https://api.flutterwave.com/v3';
 const FLUTTERWAVE_SECRET_KEY = process.env.FLW_SECRET_KEY || 'FLWSECK_TEST-4583ca0ecf022faeae1c25051f0ded27-X';
 const FLUTTERWAVE_PUBLIC_KEY = process.env.FLW_PUBLIC_KEY || 'FLWPUBK_TEST-683106d90bfca0e7ad79a7f7329103ca-X';
 
-console.log('Flutterwave Configuration:');
-console.log('- API URL:', FLUTTERWAVE_API_URL);
-console.log('- Secret Key:', FLUTTERWAVE_SECRET_KEY ? 'Configured' : 'Not configured');
-console.log('- Public Key:', FLUTTERWAVE_PUBLIC_KEY ? 'Configured' : 'Not configured');
+// console.log('Flutterwave Configuration:');
+// console.log('- API URL:', FLUTTERWAVE_API_URL);
+// console.log('- Secret Key:', FLUTTERWAVE_SECRET_KEY ? 'Configured' : 'Not configured');
+// console.log('- Public Key:', FLUTTERWAVE_PUBLIC_KEY ? 'Configured' : 'Not configured');
 
 // Create axios instance for Flutterwave API
 const flutterwaveAPI = axios.create({
@@ -82,12 +82,12 @@ router.post('/initiate-payment', async (req, res) => {
       callback_url: callback_url || 'https://webhook.site/077164d9-29cb-40df-ba29-8a00e59a7e60'
     };
 
-    console.log(`Initiating ${country} mobile money payment with payload:`, payload);
+    // console.log(`Initiating ${country} mobile money payment with payload:`, payload);
 
     // Use the correct endpoint for the selected country
     const response = await flutterwaveAPI.post(`/charges?type=${config.type}`, payload);
     
-    console.log('Flutterwave response:', response.data);
+    // console.log('Flutterwave response:', response.data);
 
     // Check if the response indicates success
     if (response.data.status === 'success') {
@@ -182,11 +182,11 @@ router.post('/test-card-payment', async (req, res) => {
       redirect_url: 'https://ecotunga.com/payment/redirect'
     };
 
-    console.log('Testing card payment with payload:', payload);
+    // console.log('Testing card payment with payload:', payload);
 
     const response = await flutterwaveAPI.post('/charges?type=card', payload);
     
-    console.log('Card payment response:', response.data);
+    // console.log('Card payment response:', response.data);
 
     res.json({
       success: true,
@@ -272,7 +272,7 @@ router.post('/test-mobile-money', async (req, res) => {
           callback_url: 'https://webhook.site/077164d9-29cb-40df-ba29-8a00e59a7e60'
         };
 
-        console.log(`Testing phone format ${i + 1}: ${testPhone}`);
+        // console.log(`Testing phone format ${i + 1}: ${testPhone}`);
         const response = await flutterwaveAPI.post('/charges?type=mobile_money_rwanda', payload);
         
         results.push({
@@ -339,7 +339,7 @@ router.post('/test-payment-types', async (req, res) => {
           callback_url: 'https://webhook.site/077164d9-29cb-40df-ba29-8a00e59a7e60'
         };
 
-        console.log(`Testing payment type: ${paymentType}`);
+        // console.log(`Testing payment type: ${paymentType}`);
         const response = await flutterwaveAPI.post(`/charges?type=${paymentType}`, payload);
         
         results.push({
@@ -405,7 +405,7 @@ router.post('/test-simple-payment', async (req, res) => {
       }
     };
 
-    console.log('Simulating successful payment:', mockResponse);
+    // console.log('Simulating successful payment:', mockResponse);
 
     res.json({
       success: true,

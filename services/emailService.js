@@ -18,10 +18,10 @@ const transporter = nodemailer.createTransport({
 const testSMTPConnection = async () => {
   try {
     await transporter.verify();
-    console.log('✅ SMTP connection successful');
+    // console.log('✅ SMTP connection successful');
     return { success: true, message: 'SMTP connection successful' };
   } catch (error) {
-    console.error('❌ SMTP connection failed:', error.message);
+    // console.error('❌ SMTP connection failed:', error.message);
     return { success: false, error: error.message };
   }
 };
@@ -192,10 +192,10 @@ const sendBookingConfirmationEmail = async (bookingData) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('Booking confirmation email sent:', info.messageId);
+    // console.log('Booking confirmation email sent:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Error sending booking confirmation email:', error);
+    // console.error('Error sending booking confirmation email:', error);
     return { success: false, error: error.message };
   }
 };
@@ -223,10 +223,10 @@ const sendAdminNotificationEmail = async (bookingData) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('Admin notification email sent:', info.messageId);
+    // console.log('Admin notification email sent:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Error sending admin notification email:', error);
+    // console.error('Error sending admin notification email:', error);
     return { success: false, error: error.message };
   }
 };

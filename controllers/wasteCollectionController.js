@@ -23,8 +23,8 @@ exports.createWasteCollection = async (req, res) => {
     } = req.body;
     const user_id = req.user.id;
 
-    console.log('createWasteCollection called with data:', req.body);
-    console.log('house_number from request:', house_number);
+    // console.log('createWasteCollection called with data:', req.body);
+    // console.log('house_number from request:', house_number);
 
     const insertData = {
       user_id,
@@ -45,11 +45,11 @@ exports.createWasteCollection = async (req, res) => {
       notes
     };
 
-    console.log('Insert data being sent to database:', insertData);
+    // console.log('Insert data being sent to database:', insertData);
 
     const [id] = await db('waste_collection').insert(insertData);
 
-    console.log('Waste collection created with ID:', id);
+    // console.log('Waste collection created with ID:', id);
 
     // Get company information for email
     let companyInfo = {};
@@ -94,30 +94,30 @@ exports.createWasteCollection = async (req, res) => {
 
     // Send confirmation email to customer
     try {
-      console.log('📧 Attempting to send booking confirmation email to:', email);
+      // console.log('📧 Attempting to send booking confirmation email to:', email);
       const emailResult = await sendBookingConfirmationEmail(bookingData);
       if (emailResult.success) {
-        console.log('✅ Booking confirmation email sent successfully');
-        console.log('📧 Message ID:', emailResult.messageId);
+        // console.log('✅ Booking confirmation email sent successfully');
+        // console.log('📧 Message ID:', emailResult.messageId);
       } else {
-        console.error('❌ Failed to send booking confirmation email:', emailResult.error);
+        // console.error('❌ Failed to send booking confirmation email:', emailResult.error);
       }
     } catch (emailError) {
-      console.error('❌ Error sending booking confirmation email:', emailError);
+      // console.error('❌ Error sending booking confirmation email:', emailError);
     }
 
     // Send notification email to admin
     try {
-      console.log('📧 Attempting to send admin notification email');
+      // console.log('📧 Attempting to send admin notification email');
       const adminEmailResult = await sendAdminNotificationEmail(bookingData);
       if (adminEmailResult.success) {
-        console.log('✅ Admin notification email sent successfully');
-        console.log('📧 Message ID:', adminEmailResult.messageId);
+        // console.log('✅ Admin notification email sent successfully');
+        // console.log('📧 Message ID:', adminEmailResult.messageId);
       } else {
-        console.error('❌ Failed to send admin notification email:', adminEmailResult.error);
+        // console.error('❌ Failed to send admin notification email:', adminEmailResult.error);
       }
     } catch (adminEmailError) {
-      console.error('❌ Error sending admin notification email:', adminEmailError);
+      // console.error('❌ Error sending admin notification email:', adminEmailError);
     }
 
     res.status(201).json({ 
@@ -136,19 +136,19 @@ exports.getUserWasteCollections = async (req, res) => {
   try {
     const user_id = req.user.id;
     
-    console.log('🔍 getUserWasteCollections called for user:', user_id);
+    // console.log('🔍 getUserWasteCollections called for user:', user_id);
     
     // First, let's check if the user exists and get their details
     const user = await db('users').where('id', user_id).select('id', 'email', 'role').first();
-    console.log('👤 User details:', user);
+    // console.log('👤 User details:', user);
     
     // Check if there are any waste collections at all
     const allCollections = await db('waste_collection').select('id', 'user_id', 'name', 'email', 'status');
-    console.log('📊 All waste collections in database:', allCollections);
+    // console.log('📊 All waste collections in database:', allCollections);
     
     // Check collections for this specific user
     const userCollections = allCollections.filter(c => c.user_id === user_id);
-    console.log('📊 Collections for this user:', userCollections);
+    // console.log('📊 Collections for this user:', userCollections);
     
     const collections = await db('waste_collection')
       .leftJoin('companies', 'waste_collection.company_id', 'companies.id')
@@ -161,15 +161,15 @@ exports.getUserWasteCollections = async (req, res) => {
       )
       .orderBy('waste_collection.created_at', 'desc');
 
-    console.log('📊 Final query result - Found collections:', collections.length);
-    console.log('📊 Collections data:', collections.map(c => ({
-      id: c.id,
-      customer_name: c.name,
-      customer_email: c.email,
-      status: c.status,
-      pickup_date: c.pickup_date,
-      user_id: c.user_id
-    })));
+    // console.log('📊 Final query result - Found collections:', collections.length);
+    // console.log('📊 Collections data:', collections.map(c => ({
+    //   id: c.id,
+    //   customer_name: c.name,
+    //   customer_email: c.email,
+    //   status: c.status,
+    //   pickup_date: c.pickup_date,
+    //   user_id: c.user_id
+    // })));
 
     res.json(collections);
   } catch (error) {
@@ -183,40 +183,40 @@ exports.getWasteCollectionsByCompany = async (req, res) => {
   try {
     const user_id = req.user.id;
     
-    console.log('🔍 getWasteCollectionsByCompany called for user:', user_id);
+    // console.log('🔍 getWasteCollectionsByCompany called for user:', user_id);
     
     // Step 1: Get the user's email and role from the database
     const user = await db('users').where('id', user_id).select('email', 'role').first();
     
     if (!user) {
-      console.log('❌ User not found');
+      // console.log('❌ User not found');
       return res.status(404).json({ error: 'User not found' });
     }
     
-    console.log('👤 User email:', user.email);
-    console.log('👤 User role:', user.role);
+    // console.log('👤 User email:', user.email);
+    // console.log('👤 User role:', user.role);
     
     // Step 2: Check if user is a waste collector
     if (user.role !== 'waste_collector') {
-      console.log('❌ User is not a waste collector');
+      // console.log('❌ User is not a waste collector');
       return res.status(403).json({ error: 'Access denied. Only waste collectors can access this endpoint.' });
     }
     
     // Step 3: First, let's check if the type column exists and what companies are available
     try {
       const allCompanies = await db('companies').select('id', 'name', 'email', 'type');
-      console.log('🏢 All companies in database:', allCompanies);
+      // console.log('🏢 All companies in database:', allCompanies);
       
       // Check if any companies have the type column
       const companiesWithType = allCompanies.filter(c => c.hasOwnProperty('type'));
-      console.log('🏢 Companies with type column:', companiesWithType);
+      // console.log('🏢 Companies with type column:', companiesWithType);
       
       // Check if any companies match the user's email
       const companiesWithMatchingEmail = allCompanies.filter(c => c.email === user.email);
-      console.log('🏢 Companies with matching email:', companiesWithMatchingEmail);
+      // console.log('🏢 Companies with matching email:', companiesWithMatchingEmail);
       
     } catch (schemaError) {
-      console.log('⚠️ Schema error when checking companies:', schemaError.message);
+      // console.log('⚠️ Schema error when checking companies:', schemaError.message);
     }
     
     // Step 4: Try to get the company record for this waste collector
@@ -229,20 +229,20 @@ exports.getWasteCollectionsByCompany = async (req, res) => {
         .where('type', 'waste_collector')
         .first();
       
-      console.log('🏢 Company found with type filter:', userCompany);
+      // console.log('🏢 Company found with type filter:', userCompany);
       
       // If not found, try without type filter (in case type column doesn't exist)
       if (!userCompany) {
-        console.log('🔍 Trying without type filter...');
+        // console.log('🔍 Trying without type filter...');
         userCompany = await db('companies')
           .where('email', user.email)
           .first();
         
-        console.log('🏢 Company found without type filter:', userCompany);
+        // console.log('🏢 Company found without type filter:', userCompany);
       }
       
     } catch (companyError) {
-      console.log('⚠️ Error when querying companies:', companyError.message);
+      // console.log('⚠️ Error when querying companies:', companyError.message);
       
       // If there's an error, try a simpler query
       try {
@@ -250,21 +250,21 @@ exports.getWasteCollectionsByCompany = async (req, res) => {
           .where('email', user.email)
           .first();
         
-        console.log('🏢 Company found with simple query:', userCompany);
+        // console.log('🏢 Company found with simple query:', userCompany);
       } catch (simpleError) {
-        console.log('❌ Error with simple company query:', simpleError.message);
+        // console.log('❌ Error with simple company query:', simpleError.message);
       }
     }
     
     if (!userCompany) {
-      console.log('❌ No company found for waste collector with email:', user.email);
+      // console.log('❌ No company found for waste collector with email:', user.email);
       
       // Let's check what companies exist
       try {
         const allCompanies = await db('companies').select('id', 'name', 'email');
-        console.log('🏢 Available companies:', allCompanies);
+        // console.log('🏢 Available companies:', allCompanies);
       } catch (e) {
-        console.log('❌ Could not fetch companies:', e.message);
+        // console.log('❌ Could not fetch companies:', e.message);
       }
       
       return res.status(404).json({ 
@@ -275,18 +275,18 @@ exports.getWasteCollectionsByCompany = async (req, res) => {
       });
     }
     
-    console.log('✅ Company found - ID:', userCompany.id, 'Name:', userCompany.name, 'Email:', userCompany.email);
+    // console.log('✅ Company found - ID:', userCompany.id, 'Name:', userCompany.name, 'Email:', userCompany.email);
     
     // Step 5: Check if there are any waste collections at all
     try {
       const allCollections = await db('waste_collection').select('id', 'company_id', 'name', 'email', 'status');
-      console.log('📊 All waste collections in database:', allCollections);
+      // console.log('📊 All waste collections in database:', allCollections);
       
       const collectionsForCompany = allCollections.filter(c => c.company_id === userCompany.id);
-      console.log('📊 Collections for this company:', collectionsForCompany);
+      // console.log('📊 Collections for this company:', collectionsForCompany);
       
     } catch (collectionsError) {
-      console.log('⚠️ Error when checking all collections:', collectionsError.message);
+      // console.log('⚠️ Error when checking all collections:', collectionsError.message);
     }
     
     // Step 6: Get waste collections where the company_id matches the waste collector's company
@@ -301,15 +301,15 @@ exports.getWasteCollectionsByCompany = async (req, res) => {
       )
       .orderBy('waste_collection.created_at', 'desc');
 
-    console.log('📊 Found collections:', collections.length);
-    console.log('📊 Collections data:', collections.map(c => ({
-      id: c.id,
-      customer_name: c.name,
-      customer_email: c.email,
-      status: c.status,
-      pickup_date: c.pickup_date,
-      company_id: c.company_id
-    })));
+    // console.log('📊 Found collections:', collections.length);
+    // console.log('📊 Collections data:', collections.map(c => ({
+    //   id: c.id,
+    //   customer_name: c.name,
+    //   customer_email: c.email,
+    //   status: c.status,
+    //   pickup_date: c.pickup_date,
+    //   company_id: c.company_id
+    // })));
 
     res.json(collections);
   } catch (error) {

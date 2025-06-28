@@ -111,8 +111,8 @@ const updateProfile = async (req, res) => {
     role
   } = req.body;
 
-  console.log('updateProfile called with data:', req.body);
-  console.log('house_number from request:', house_number);
+  // console.log('updateProfile called with data:', req.body);
+  // console.log('house_number from request:', house_number);
 
   try {
     // Check if user exists
@@ -145,7 +145,7 @@ const updateProfile = async (req, res) => {
       updated_at: db.fn.now()
     };
 
-    console.log('Update data being sent to database:', updateData);
+    // console.log('Update data being sent to database:', updateData);
 
     // Update the user profile
     await db('users')
@@ -174,8 +174,8 @@ const updateProfile = async (req, res) => {
       )
       .first();
 
-    console.log('Updated user from database:', updatedUser);
-    console.log('house_number in updated user:', updatedUser.house_number);
+    // console.log('Updated user from database:', updatedUser);
+    // console.log('house_number in updated user:', updatedUser.house_number);
 
     res.json(updatedUser);
   } catch (error) {

@@ -15,7 +15,7 @@ exports.register = async (req, res) => {
   }
 
   try {
-    console.log('Registration attempt for:', { name, email, role: userRole });
+    // console.log('Registration attempt for:', { name, email, role: userRole });
     
     const existingUser = await db('users').where({ email }).first();
     if (existingUser) {
@@ -25,7 +25,7 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const id = uuidv4();
     
-    console.log('Attempting to insert user with ID:', id);
+    // console.log('Attempting to insert user with ID:', id);
     
     const insertData = {
       id,
@@ -35,33 +35,33 @@ exports.register = async (req, res) => {
       role: userRole
     };
     
-    console.log('Insert data:', { ...insertData, password: '[REDACTED]' });
+    // console.log('Insert data:', { ...insertData, password: '[REDACTED]' });
     
     const insertResult = await db('users').insert(insertData);
-    console.log('Insert result:', insertResult);
+    // console.log('Insert result:', insertResult);
     
     // Verify the user was inserted with the correct role
     const insertedUser = await db('users').where('id', id).first();
-    console.log('Inserted user verification:', {
-      id: insertedUser.id,
-      name: insertedUser.name,
-      email: insertedUser.email,
-      role: insertedUser.role
-    });
+    // console.log('Inserted user verification:', {
+    //   id: insertedUser.id,
+    //   name: insertedUser.name,
+    //   email: insertedUser.email,
+    //   role: insertedUser.role
+    // });
     
-    console.log('User inserted successfully');
+    // console.log('User inserted successfully');
     
     // If user is a waste collector or recycling center, create a company record
     if (userRole === 'waste_collector' || userRole === 'recycling_center') {
-      console.log(`Creating company record for ${userRole}...`);
+      // console.log(`Creating company record for ${userRole}...`);
       
       // Print current database name
       try {
         const [dbNameRow] = await db.raw('SELECT DATABASE() as dbname');
         const dbName = dbNameRow[0]?.dbname || dbNameRow[0] || 'unknown';
-        console.log('Current DB in registration:', dbName);
+        // console.log('Current DB in registration:', dbName);
       } catch (dbError) {
-        console.error('Error getting database name:', dbError);
+        // console.error('Error getting database name:', dbError);
       }
       
       const companyData = {
@@ -78,26 +78,26 @@ exports.register = async (req, res) => {
         type: userRole
       };
       
-      console.log('Company data to insert:', companyData);
+      // console.log('Company data to insert:', companyData);
       
       try {
         const [companyId] = await db('companies').insert(companyData);
-        console.log('Company record created successfully with ID:', companyId);
+        // console.log('Company record created successfully with ID:', companyId);
         // Verify the company was created
         const createdCompany = await db('companies').where({ id: companyId }).first();
-        console.log('Created company record:', createdCompany);
+        // console.log('Created company record:', createdCompany);
         // Print all companies after insert
         const allCompanies = await db('companies').select('*');
-        console.log('All companies after insert:', allCompanies);
+        // console.log('All companies after insert:', allCompanies);
       } catch (companyError) {
         console.error('Error creating company record:', companyError);
         // Don't fail the user registration if company creation fails
       }
     } else {
-      console.log('User is not a waste collector or recycling center, skipping company creation');
+      // console.log('User is not a waste collector or recycling center, skipping company creation');
     }
     
-    console.log('User registered successfully');
+    // console.log('User registered successfully');
     res.status(201).json({ message: 'User registered successfully' });
   } catch (err) {
     console.error('Registration error:', err);
