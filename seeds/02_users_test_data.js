@@ -11,7 +11,7 @@ exports.seed = async function (knex) {
     return;
   }
 
-  const bcrypt = require('bcrypt');
+  const bcrypt = require('bcryptjs');
   const hashedPassword = await bcrypt.hash('password123', 10);
 
   // Format dates for MySQL
@@ -63,11 +63,21 @@ exports.seed = async function (knex) {
       role: 'waste_collector',
       created_at: mysqlDateTime,
       updated_at: mysqlDateTime
+    },
+    {
+      id: '550e8400-e29b-41d4-a716-446655440006',
+      name: 'Recycling Center Owner',
+      email: 'recycling.center@example.com',
+      password: hashedPassword,
+      role: 'recycling_center',
+      created_at: mysqlDateTime,
+      updated_at: mysqlDateTime
     }
   ];
 
   await knex('users').insert(users);
-  console.log('Inserted 5 test users including waste collectors');
+  console.log('Inserted 6 test users including waste collectors and recycling center');
   console.log('Waste collector email: waste.collector@example.com');
+  console.log('Recycling center email: recycling.center@example.com');
   console.log('Password for all users: password123');
 }; 

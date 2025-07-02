@@ -97,6 +97,11 @@ const paymentRoutes = require('./routes/paymentRoutes');
 console.log('Mounting payment routes...');
 app.use('/api/payments', paymentRoutes);
 
+// Recycling center routes
+const recyclingCenterRoutes = require('./routes/recyclingCenterRoutes');
+console.log('Mounting recycling center routes...');
+app.use('/api/recycling-center', recyclingCenterRoutes);
+
 // Test the route mounting
 app.get('/api/test', (req, res) => {
   res.json({ message: 'API routes are working!' });

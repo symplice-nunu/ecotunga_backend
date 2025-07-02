@@ -27,6 +27,8 @@ exports.seed = async function (knex) {
       village: 'Village 1',
       street: 'KG 123 Street',
       amount_per_month: 15000.00,
+      user_id: '550e8400-e29b-41d4-a716-446655440006', // Recycling center user
+      type: 'recycling_center',
       created_at: mysqlDateTime,
       updated_at: mysqlDateTime
     },
@@ -41,6 +43,7 @@ exports.seed = async function (knex) {
       village: 'Village 2',
       street: 'KG 456 Street',
       amount_per_month: 18000.00,
+      type: 'waste_collector',
       created_at: mysqlDateTime,
       updated_at: mysqlDateTime
     },
@@ -55,6 +58,7 @@ exports.seed = async function (knex) {
       village: 'Village 3',
       street: 'KG 789 Street',
       amount_per_month: 12000.00,
+      type: 'waste_collector',
       created_at: mysqlDateTime,
       updated_at: mysqlDateTime
     }
