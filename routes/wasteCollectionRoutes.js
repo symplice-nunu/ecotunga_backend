@@ -11,6 +11,15 @@ router.get('/test', (req, res) => {
 // Debug route without auth to check database structure
 router.get('/debug', wasteCollectionController.debugDatabaseStructure);
 
+// Test route with auth to check user authentication
+router.get('/test-auth', authMiddleware, (req, res) => {
+  res.json({ 
+    message: 'Authentication working!', 
+    user: req.user,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Apply auth middleware to all routes below
 router.use(authMiddleware);
 

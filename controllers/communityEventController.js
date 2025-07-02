@@ -292,6 +292,59 @@ const getUserEvents = async (req, res) => {
   }
 };
 
+// Count events happening tomorrow
+const getTomorrowEventsCount = async (req, res) => {
+  try {
+    // Get tomorrow's date in YYYY-MM-DD format
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowDate = tomorrow.toISOString().split('T')[0];
+
+    const result = await db('community_events')
+      .where('event_date', tomorrowDate)
+      .where('is_active', true)
+      .count('* as count')
+      .first();
+
+    const count = parseInt(result.count);
+
+    res.json({
+      count,
+      tomorrow_date: tomorrowDate,
+      message: `Found ${count} event(s) scheduled for tomorrow`
+    });
+  } catch (error) {
+    console.error('Error counting tomorrow events:', error);
+    res.status(500).json({ message: 'Error counting tomorrow events' });
+  }
+};
+
+// Get events happening tomorrow
+const getTomorrowEvents = async (req, res) => {
+  try {
+    // Get tomorrow's date in YYYY-MM-DD format
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowDate = tomorrow.toISOString().split('T')[0];
+
+    const events = await db('community_events')
+      .select(
+        'community_events.*',
+        'users.name as created_by_name',
+        db.raw('(SELECT COUNT(*) FROM event_participants WHERE event_participants.event_id = community_events.id AND event_participants.status = "registered") as current_participants')
+      )
+      .leftJoin('users', 'community_events.created_by', 'users.id')
+      .where('community_events.event_date', tomorrowDate)
+      .where('community_events.is_active', true)
+      .orderBy('community_events.event_time', 'asc');
+
+    res.json(events);
+  } catch (error) {
+    console.error('Error fetching tomorrow events:', error);
+    res.status(500).json({ message: 'Error fetching tomorrow events' });
+  }
+};
+
 module.exports = {
   getAllEvents,
   getEventById,
@@ -300,5 +353,7 @@ module.exports = {
   deleteEvent,
   joinEvent,
   leaveEvent,
-  getUserEvents
+  getUserEvents,
+  getTomorrowEventsCount,
+  getTomorrowEvents
 }; 

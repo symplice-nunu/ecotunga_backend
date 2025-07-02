@@ -1,6 +1,65 @@
 const db = require('../config/db');
 const { sendBookingConfirmationEmail, sendAdminNotificationEmail } = require('../services/emailService');
 
+// Debug function to check database structure
+exports.debugDatabaseStructure = async (req, res) => {
+  try {
+    console.log('🔍 Debug: Checking database structure...');
+    
+    // Test database connection
+    const connectionTest = await db.raw('SELECT 1 as test');
+    console.log('✅ Database connection test:', connectionTest[0]);
+    
+    // Check if tables exist
+    const tables = await db.raw('SHOW TABLES');
+    console.log('📋 Available tables:', tables[0]);
+    
+    // Check waste_collection table structure
+    const wasteCollectionColumns = await db.raw('DESCRIBE waste_collection');
+    console.log('📊 waste_collection table structure:', wasteCollectionColumns[0]);
+    
+    // Check users table structure
+    const usersColumns = await db.raw('DESCRIBE users');
+    console.log('👤 users table structure:', usersColumns[0]);
+    
+    // Check companies table structure
+    const companiesColumns = await db.raw('DESCRIBE companies');
+    console.log('🏢 companies table structure:', companiesColumns[0]);
+    
+    // Count records in each table
+    const wasteCollectionCount = await db('waste_collection').count('* as count');
+    const usersCount = await db('users').count('* as count');
+    const companiesCount = await db('companies').count('* as count');
+    
+    console.log('📊 Record counts:', {
+      waste_collection: wasteCollectionCount[0].count,
+      users: usersCount[0].count,
+      companies: companiesCount[0].count
+    });
+    
+    res.json({
+      message: 'Database structure debug completed',
+      connection: 'OK',
+      tables: tables[0],
+      wasteCollectionColumns: wasteCollectionColumns[0],
+      usersColumns: usersColumns[0],
+      companiesColumns: companiesColumns[0],
+      recordCounts: {
+        waste_collection: wasteCollectionCount[0].count,
+        users: usersCount[0].count,
+        companies: companiesCount[0].count
+      }
+    });
+  } catch (error) {
+    console.error('❌ Debug error:', error);
+    res.status(500).json({
+      error: 'Debug failed',
+      message: error.message,
+      stack: error.stack
+    });
+  }
+};
+
 // Store waste collection data
 exports.createWasteCollection = async (req, res) => {
   try {
