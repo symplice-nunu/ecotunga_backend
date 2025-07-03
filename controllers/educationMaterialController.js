@@ -95,6 +95,7 @@ const createMaterial = async (req, res) => {
     author,
     image_url,
     content_url,
+    youtube_url,
     featured,
     tags
   } = req.body;
@@ -118,6 +119,7 @@ const createMaterial = async (req, res) => {
         author,
         image_url,
         content_url,
+        youtube_url,
         featured: featured || false,
         tags: tags ? JSON.stringify(tags) : JSON.stringify([]),
         created_by: userId
@@ -146,6 +148,7 @@ const updateMaterial = async (req, res) => {
     author,
     image_url,
     content_url,
+    youtube_url,
     featured,
     tags,
     is_active
@@ -171,6 +174,7 @@ const updateMaterial = async (req, res) => {
         author: author || existingMaterial.author,
         image_url: image_url || existingMaterial.image_url,
         content_url: content_url || existingMaterial.content_url,
+        youtube_url: youtube_url || existingMaterial.youtube_url,
         featured: featured !== undefined ? featured : existingMaterial.featured,
         tags: tags ? JSON.stringify(tags) : existingMaterial.tags,
         is_active: is_active !== undefined ? is_active : existingMaterial.is_active,

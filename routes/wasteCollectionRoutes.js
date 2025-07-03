@@ -42,5 +42,6 @@ router.get('/next-pickup', wasteCollectionController.getNextWastePickup);
 router.get('/admin/all', wasteCollectionController.getAllWasteCollections);
 router.put('/admin/:id/approve', wasteCollectionController.approveWasteCollection);
 router.put('/admin/:id/deny', wasteCollectionController.denyWasteCollection);
+router.put('/admin/:id/complete', wasteCollectionController.completeWasteCollection);
 
 module.exports = router; 

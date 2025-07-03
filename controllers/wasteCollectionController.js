@@ -216,19 +216,26 @@ exports.getUserWasteCollections = async (req, res) => {
         'waste_collection.*',
         'companies.name as company_name',
         'companies.email as company_email',
-        'companies.phone as company_phone'
+        'companies.phone as company_phone',
+        'companies.district as company_district',
+        'companies.sector as company_sector',
+        'companies.cell as company_cell',
+        'companies.village as company_village',
+        'companies.street as company_street'
       )
       .orderBy('waste_collection.created_at', 'desc');
 
-    // console.log('📊 Final query result - Found collections:', collections.length);
-    // console.log('📊 Collections data:', collections.map(c => ({
-    //   id: c.id,
-    //   customer_name: c.name,
-    //   customer_email: c.email,
-    //   status: c.status,
-    //   pickup_date: c.pickup_date,
-    //   user_id: c.user_id
-    // })));
+    console.log('🔍 getUserWasteCollections - Sending response with', collections.length, 'collections');
+    if (collections.length > 0) {
+      console.log('🔍 First collection company fields:', {
+        company_name: collections[0].company_name,
+        company_street: collections[0].company_street,
+        company_village: collections[0].company_village,
+        company_cell: collections[0].company_cell,
+        company_sector: collections[0].company_sector,
+        company_district: collections[0].company_district
+      });
+    }
 
     res.json(collections);
   } catch (error) {
@@ -356,7 +363,12 @@ exports.getWasteCollectionsByCompany = async (req, res) => {
         'waste_collection.*',
         'companies.name as company_name',
         'companies.email as company_email',
-        'companies.phone as company_phone'
+        'companies.phone as company_phone',
+        'companies.district as company_district',
+        'companies.sector as company_sector',
+        'companies.cell as company_cell',
+        'companies.village as company_village',
+        'companies.street as company_street'
       )
       .orderBy('waste_collection.created_at', 'desc');
 
@@ -398,14 +410,19 @@ exports.getAllWasteCollections = async (req, res) => {
           try {
             const company = await db('companies')
               .where('id', collection.company_id)
-              .select('name', 'email', 'phone')
+              .select('name', 'email', 'phone', 'district', 'sector', 'cell', 'village', 'street')
               .first();
             
             if (company) {
               companyInfo = {
                 company_name: company.name,
                 company_email: company.email,
-                company_phone: company.phone
+                company_phone: company.phone,
+                company_district: company.district,
+                company_sector: company.sector,
+                company_cell: company.cell,
+                company_village: company.village,
+                company_street: company.street
               };
             }
           } catch (companyError) {
@@ -426,6 +443,18 @@ exports.getAllWasteCollections = async (req, res) => {
         };
       })
     );
+
+    console.log('🔍 getAllWasteCollections - Sending response with', collectionsWithCompanyInfo.length, 'collections');
+    if (collectionsWithCompanyInfo.length > 0) {
+      console.log('🔍 First collection company fields:', {
+        company_name: collectionsWithCompanyInfo[0].company_name,
+        company_street: collectionsWithCompanyInfo[0].company_street,
+        company_village: collectionsWithCompanyInfo[0].company_village,
+        company_cell: collectionsWithCompanyInfo[0].company_cell,
+        company_sector: collectionsWithCompanyInfo[0].company_sector,
+        company_district: collectionsWithCompanyInfo[0].company_district
+      });
+    }
 
     res.json(collectionsWithCompanyInfo);
   } catch (error) {
@@ -448,8 +477,10 @@ exports.approveWasteCollection = async (req, res) => {
       .where('id', id)
       .update({
         status: 'approved',
+        payment_status: 'paid', // Auto-set payment status to paid when approved
         admin_notes: admin_notes || null,
-        status_updated_at: db.fn.now()
+        status_updated_at: db.fn.now(),
+        payment_date: db.fn.now() // Set payment date to current time
       });
 
     if (updated === 0) {
@@ -474,6 +505,7 @@ exports.denyWasteCollection = async (req, res) => {
       .where('id', id)
       .update({
         status: 'denied',
+        payment_status: 'cancelled', // Auto-set payment status to cancelled when denied
         admin_notes: admin_notes || null,
         status_updated_at: db.fn.now()
       });
@@ -486,6 +518,33 @@ exports.denyWasteCollection = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to deny waste collection' });
+  }
+};
+
+// Complete waste collection request
+exports.completeWasteCollection = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { admin_notes } = req.body;
+    const admin_id = req.user.id;
+
+    const updated = await db('waste_collection')
+      .where('id', id)
+      .update({
+        status: 'completed',
+        payment_status: 'paid', // Ensure payment status remains paid when completed
+        admin_notes: admin_notes || null,
+        status_updated_at: db.fn.now()
+      });
+
+    if (updated === 0) {
+      return res.status(404).json({ error: 'Waste collection not found' });
+    }
+
+    res.json({ message: 'Waste collection completed successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to complete waste collection' });
   }
 };
 
