@@ -108,7 +108,8 @@ const updateProfile = async (req, res) => {
     sector,
     cell,
     street,
-    role
+    role,
+    waste_types
   } = req.body;
 
   // console.log('updateProfile called with data:', req.body);
@@ -145,12 +146,32 @@ const updateProfile = async (req, res) => {
       updated_at: db.fn.now()
     };
 
+    // Add waste_types if provided
+    if (waste_types !== undefined) {
+      updateData.waste_types = JSON.stringify(waste_types);
+    }
+
     // console.log('Update data being sent to database:', updateData);
 
     // Update the user profile
     await db('users')
       .where({ id: userId })
       .update(updateData);
+
+    // If user is a recycling center and waste_types were updated, also update the company record
+    if (user.role === 'recycling_center' && waste_types !== undefined) {
+      try {
+        await db('companies')
+          .where({ email: user.email })
+          .update({
+            waste_types: JSON.stringify(waste_types),
+            updated_at: db.fn.now()
+          });
+      } catch (companyError) {
+        console.error('Error updating company waste types:', companyError);
+        // Don't fail the user update if company update fails
+      }
+    }
 
     // Get the updated user
     const updatedUser = await db('users')
@@ -169,6 +190,7 @@ const updateProfile = async (req, res) => {
         'cell',
         'street',
         'role',
+        'waste_types',
         'created_at',
         'updated_at'
       )
@@ -193,7 +215,7 @@ const getProfile = async (req, res) => {
       .select(
         'id', 
         'name', 
-        'email', 
+ 'email', 
         'last_name',
         'gender',
         'phone_number',
@@ -204,6 +226,7 @@ const getProfile = async (req, res) => {
         'cell',
         'street',
         'role',
+        'waste_types',
         'created_at',
         'updated_at'
       )

@@ -102,6 +102,11 @@ const recyclingCenterRoutes = require('./routes/recyclingCenterRoutes');
 console.log('Mounting recycling center routes...');
 app.use('/api/recycling-center', recyclingCenterRoutes);
 
+// Receipt routes
+const receiptRoutes = require('./routes/receiptRoutes');
+console.log('Mounting receipt routes...');
+app.use('/api/receipts', receiptRoutes);
+
 // Test the route mounting
 app.get('/api/test', (req, res) => {
   res.json({ message: 'API routes are working!' });

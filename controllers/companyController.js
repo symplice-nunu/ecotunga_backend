@@ -17,7 +17,8 @@ const companyController = {
                 amount_per_month,
                 ubudehe_category,
                 gender,
-                last_name
+                last_name,
+                website
             } = req.body;
 
             // Validate required fields
@@ -45,7 +46,8 @@ const companyController = {
                 amount_per_month,
                 ubudehe_category,
                 gender,
-                last_name
+                last_name,
+                website
             });
 
             const newCompany = await db('companies').where({ id: companyId }).first();
@@ -74,7 +76,9 @@ const companyController = {
                 amount_per_month,
                 ubudehe_category,
                 gender,
-                last_name
+                last_name,
+                website,
+                waste_types
             } = req.body;
 
             // Check if company exists
@@ -83,22 +87,46 @@ const companyController = {
                 return res.status(404).json({ error: 'Company not found' });
             }
 
+            // Prepare update data
+            const updateData = {
+                phone: phone || existingCompany.phone,
+                district: district || existingCompany.district,
+                sector: sector || existingCompany.sector,
+                cell: cell || existingCompany.cell,
+                village: village || existingCompany.village,
+                street: street || existingCompany.street,
+                amount_per_month: amount_per_month || existingCompany.amount_per_month,
+                ubudehe_category: ubudehe_category || existingCompany.ubudehe_category,
+                gender: gender || existingCompany.gender,
+                last_name: last_name || existingCompany.last_name,
+                website: website !== undefined ? website : existingCompany.website,
+                updated_at: db.fn.now()
+            };
+
+            // Add waste_types if provided
+            if (waste_types !== undefined) {
+                updateData.waste_types = JSON.stringify(waste_types);
+            }
+
             // Update company information
             await db('companies')
                 .where({ email })
-                .update({
-                    phone: phone || existingCompany.phone,
-                    district: district || existingCompany.district,
-                    sector: sector || existingCompany.sector,
-                    cell: cell || existingCompany.cell,
-                    village: village || existingCompany.village,
-                    street: street || existingCompany.street,
-                    amount_per_month: amount_per_month || existingCompany.amount_per_month,
-                    ubudehe_category: ubudehe_category || existingCompany.ubudehe_category,
-                    gender: gender || existingCompany.gender,
-                    last_name: last_name || existingCompany.last_name,
-                    updated_at: db.fn.now()
-                });
+                .update(updateData);
+
+            // If waste_types were updated, also update the corresponding user record
+            if (waste_types !== undefined) {
+                try {
+                    await db('users')
+                        .where({ email })
+                        .update({
+                            waste_types: JSON.stringify(waste_types),
+                            updated_at: db.fn.now()
+                        });
+                } catch (userError) {
+                    console.error('Error updating user waste types:', userError);
+                    // Don't fail the company update if user update fails
+                }
+            }
 
             const updatedCompany = await db('companies').where({ email }).first();
             
@@ -132,7 +160,8 @@ const companyController = {
                 amount_per_month,
                 ubudehe_category,
                 gender,
-                last_name
+                last_name,
+                waste_types
             } = req.body;
 
             // Check if company exists
@@ -141,22 +170,46 @@ const companyController = {
                 return res.status(404).json({ error: 'Company not found' });
             }
 
+            // Prepare update data
+            const updateData = {
+                phone: phone || existingCompany.phone,
+                district: district || existingCompany.district,
+                sector: sector || existingCompany.sector,
+                cell: cell || existingCompany.cell,
+                village: village || existingCompany.village,
+                street: street || existingCompany.street,
+                amount_per_month: amount_per_month || existingCompany.amount_per_month,
+                ubudehe_category: ubudehe_category || existingCompany.ubudehe_category,
+                gender: gender || existingCompany.gender,
+                last_name: last_name || existingCompany.last_name,
+                website: req.body.website !== undefined ? req.body.website : existingCompany.website,
+                updated_at: db.fn.now()
+            };
+
+            // Add waste_types if provided
+            if (waste_types !== undefined) {
+                updateData.waste_types = JSON.stringify(waste_types);
+            }
+
             // Update company information
             await db('companies')
                 .where({ email: userEmail })
-                .update({
-                    phone: phone || existingCompany.phone,
-                    district: district || existingCompany.district,
-                    sector: sector || existingCompany.sector,
-                    cell: cell || existingCompany.cell,
-                    village: village || existingCompany.village,
-                    street: street || existingCompany.street,
-                    amount_per_month: amount_per_month || existingCompany.amount_per_month,
-                    ubudehe_category: ubudehe_category || existingCompany.ubudehe_category,
-                    gender: gender || existingCompany.gender,
-                    last_name: last_name || existingCompany.last_name,
-                    updated_at: db.fn.now()
-                });
+                .update(updateData);
+
+            // If waste_types were updated, also update the corresponding user record
+            if (waste_types !== undefined) {
+                try {
+                    await db('users')
+                        .where({ email: userEmail })
+                        .update({
+                            waste_types: JSON.stringify(waste_types),
+                            updated_at: db.fn.now()
+                        });
+                } catch (userError) {
+                    console.error('Error updating user waste types:', userError);
+                    // Don't fail the company update if user update fails
+                }
+            }
 
             const updatedCompany = await db('companies').where({ email: userEmail }).first();
             
