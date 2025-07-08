@@ -477,10 +477,8 @@ exports.approveWasteCollection = async (req, res) => {
       .where('id', id)
       .update({
         status: 'approved',
-        payment_status: 'paid', // Auto-set payment status to paid when approved
         admin_notes: admin_notes || null,
-        status_updated_at: db.fn.now(),
-        payment_date: db.fn.now() // Set payment date to current time
+        status_updated_at: db.fn.now()
       });
 
     if (updated === 0) {
@@ -505,7 +503,6 @@ exports.denyWasteCollection = async (req, res) => {
       .where('id', id)
       .update({
         status: 'denied',
-        payment_status: 'cancelled', // Auto-set payment status to cancelled when denied
         admin_notes: admin_notes || null,
         status_updated_at: db.fn.now()
       });
@@ -532,7 +529,6 @@ exports.completeWasteCollection = async (req, res) => {
       .where('id', id)
       .update({
         status: 'completed',
-        payment_status: 'paid', // Ensure payment status remains paid when completed
         admin_notes: admin_notes || null,
         status_updated_at: db.fn.now()
       });

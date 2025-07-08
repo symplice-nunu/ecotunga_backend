@@ -11,7 +11,8 @@ exports.createRecyclingCenterBooking = async (req, res) => {
       district,
       sector,
       cell,
-      street
+      street,
+      waste_type
     } = req.body;
     const user_id = req.user.id;
 
@@ -21,6 +22,29 @@ exports.createRecyclingCenterBooking = async (req, res) => {
         error: 'Missing required fields',
         required: ['company_id', 'dropoff_date', 'time_slot', 'district', 'sector', 'cell']
       });
+    }
+
+    // If no waste_type is provided, get the first available waste type from the company
+    let finalWasteType = waste_type;
+    if (!finalWasteType) {
+      const company = await db('companies')
+        .where('id', company_id)
+        .where('type', 'recycling_center')
+        .first();
+      
+      if (company && company.waste_types) {
+        try {
+          const wasteTypes = typeof company.waste_types === 'string' 
+            ? JSON.parse(company.waste_types) 
+            : company.waste_types;
+          finalWasteType = wasteTypes.length > 0 ? wasteTypes[0] : 'other';
+        } catch (error) {
+          console.error('Error parsing company waste types:', error);
+          finalWasteType = 'other';
+        }
+      } else {
+        finalWasteType = 'other';
+      }
     }
 
     // Check if company exists and is a recycling center
@@ -44,7 +68,8 @@ exports.createRecyclingCenterBooking = async (req, res) => {
       district,
       sector,
       cell,
-      street: street || null
+      street: street || null,
+      waste_type: finalWasteType
     };
 
     const [id] = await db('recycling_center_bookings').insert(insertData);
