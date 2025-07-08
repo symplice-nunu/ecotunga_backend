@@ -38,6 +38,9 @@ router.get('/', wasteCollectionController.getAllWasteCollections);
 // Get next waste pickup for user
 router.get('/next-pickup', wasteCollectionController.getNextWastePickup);
 
+// User routes
+router.put('/:id/cancel', wasteCollectionController.cancelWasteCollection);
+
 // Admin routes
 router.get('/admin/all', wasteCollectionController.getAllWasteCollections);
 router.put('/admin/:id/approve', wasteCollectionController.approveWasteCollection);

@@ -21,4 +21,7 @@ router.get('/bookings', recyclingCenterController.getAllRecyclingCenterBookings)
 // Get specific recycling center booking by ID
 router.get('/bookings/:id', recyclingCenterController.getRecyclingCenterBookingById);
 
+// Cancel recycling center booking
+router.delete('/bookings/:id', recyclingCenterController.cancelRecyclingCenterBooking);
+
 module.exports = router; 

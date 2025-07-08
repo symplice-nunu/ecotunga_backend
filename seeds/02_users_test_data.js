@@ -72,6 +72,15 @@ exports.seed = async function (knex) {
       role: 'recycling_center',
       created_at: mysqlDateTime,
       updated_at: mysqlDateTime
+    },
+    {
+      id: '550e8400-e29b-41d4-a716-446655440007',
+      name: 'Mawef User',
+      email: 'mawef@mailinator.com',
+      password: hashedPassword,
+      role: 'user',
+      created_at: mysqlDateTime,
+      updated_at: mysqlDateTime
     }
   ];
 

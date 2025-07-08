@@ -544,6 +544,73 @@ exports.completeWasteCollection = async (req, res) => {
   }
 };
 
+// Cancel waste collection request
+exports.cancelWasteCollection = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user_id = req.user.id;
+    
+    console.log('🔍 cancelWasteCollection called with:', { id, user_id, userRole: req.user.role });
+
+    // Check if the waste collection exists and belongs to the user
+    const collection = await db('waste_collection')
+      .where('id', id)
+      .first();
+
+    console.log('🔍 Found collection:', collection);
+
+    if (!collection) {
+      console.log('❌ Collection not found');
+      return res.status(404).json({ error: 'Waste collection not found' });
+    }
+
+    // Check if the user owns this collection or is an admin
+    console.log('🔍 Checking permissions:', { 
+      collectionUserId: collection.user_id, 
+      currentUserId: user_id, 
+      userRole: req.user.role 
+    });
+    
+    if (collection.user_id !== user_id && req.user.role !== 'admin') {
+      console.log('❌ Permission denied');
+      return res.status(403).json({ error: 'You do not have permission to cancel this waste collection' });
+    }
+
+    // Check if the collection can be cancelled (only pending or approved collections)
+    console.log('🔍 Checking collection status:', collection.status);
+    if (collection.status === 'completed' || collection.status === 'denied' || collection.status === 'cancelled') {
+      console.log('❌ Collection cannot be cancelled due to status:', collection.status);
+      return res.status(400).json({ error: 'This waste collection cannot be cancelled' });
+    }
+
+    console.log('🔍 Updating collection status to cancelled...');
+    const updated = await db('waste_collection')
+      .where('id', id)
+      .update({
+        status: 'cancelled',
+        status_updated_at: db.fn.now()
+      });
+
+    console.log('🔍 Update result:', updated);
+
+    if (updated === 0) {
+      console.log('❌ No rows updated');
+      return res.status(404).json({ error: 'Waste collection not found' });
+    }
+
+    console.log('✅ Collection cancelled successfully');
+    res.json({ message: 'Waste collection cancelled successfully' });
+  } catch (error) {
+    console.error('❌ Error in cancelWasteCollection:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
+    res.status(500).json({ error: 'Failed to cancel waste collection' });
+  }
+};
+
 // Get next waste pickup for the logged-in user
 exports.getNextWastePickup = async (req, res) => {
   try {
