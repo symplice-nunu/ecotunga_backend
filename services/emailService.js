@@ -200,6 +200,273 @@ const sendBookingConfirmationEmail = async (bookingData) => {
   }
 };
 
+// Create approval email template
+const createApprovalEmailTemplate = (approvalData) => {
+  const {
+    userName,
+    companyName,
+    bookingDate,
+    bookingTime,
+    location,
+    price,
+    notes,
+    bookingId,
+    wasteTypes
+  } = approvalData;
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Recycling Booking Approved</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #10B981; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background-color: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px; }
+        .booking-details { background-color: white; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #10B981; }
+        .section { margin: 20px 0; }
+        .section h3 { color: #10B981; border-bottom: 2px solid #10B981; padding-bottom: 5px; }
+        .detail-row { display: flex; justify-content: space-between; margin: 8px 0; }
+        .label { font-weight: bold; color: #555; }
+        .value { color: #333; }
+        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 14px; }
+        .status-approved { background-color: #d1fae5; color: #065f46; padding: 5px 10px; border-radius: 3px; display: inline-block; }
+        .price-highlight { background-color: #fef3c7; color: #92400e; padding: 10px; border-radius: 5px; text-align: center; font-size: 18px; font-weight: bold; margin: 15px 0; }
+        .confirm-button { background-color: #10B981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }
+        
+        /* Mobile responsiveness */
+        @media only screen and (max-width: 600px) {
+          .container { padding: 10px; }
+          .content { padding: 15px; }
+          .detail-row { flex-direction: column; }
+          .label, .value { margin: 2px 0; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>♻️ Recycling Booking Approved!</h1>
+          <p>Great news! Your recycling booking has been approved.</p>
+        </div>
+        
+        <div class="content">
+          <div class="booking-details">
+            <h2>Booking #${bookingId}</h2>
+            <span class="status-approved">Status: Approved</span>
+          </div>
+
+          <div class="price-highlight">
+            💰 Total Price: ${price}
+          </div>
+
+          <div class="section">
+            <h3>📋 Booking Details</h3>
+            <div class="detail-row">
+              <span class="label">Customer:</span>
+              <span class="value">${userName}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Recycling Center:</span>
+              <span class="value">${companyName}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Drop-off Date:</span>
+              <span class="value">${bookingDate}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Time Slot:</span>
+              <span class="value">${bookingTime}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Location:</span>
+              <span class="value">${location}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Waste Types:</span>
+              <span class="value">${wasteTypes}</span>
+            </div>
+          </div>
+
+          ${notes ? `
+          <div class="section">
+            <h3>📝 Additional Notes</h3>
+            <p>${notes}</p>
+          </div>
+          ` : ''}
+
+          <div class="section">
+            <h3>✅ Next Steps</h3>
+            <ol>
+              <li><strong>Confirm Price:</strong> Please confirm that you accept the quoted price</li>
+              <li><strong>Prepare Waste:</strong> Sort your recyclable materials properly</li>
+              <li><strong>Drop-off:</strong> Bring your materials to the recycling center on the scheduled date</li>
+              <li><strong>Payment:</strong> Pay the quoted amount at the recycling center</li>
+            </ol>
+          </div>
+
+          <div class="section">
+            <h3>💰 Price Confirmation</h3>
+            <p>Please confirm that you accept the quoted price of <strong>${price}</strong>.</p>
+            <p>If you have any questions about the pricing, please contact the recycling center directly.</p>
+            
+            <div style="text-align: center; margin: 30px 0; padding: 20px; background-color: #f8fafc; border-radius: 8px;">
+              <h3 style="color: #1f2937; margin-bottom: 15px; font-size: 18px;">Confirm Your Price</h3>
+              <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;">
+                Please click one of the buttons below to confirm or decline the quoted price.
+              </p>
+              
+              <!-- Desktop buttons -->
+              <table style="width: 100%; max-width: 400px; margin: 0 auto; display: block;">
+                <tr>
+                  <td style="text-align: center; padding: 10px;">
+                    <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/recycling-center/bookings/${bookingId}/confirm?action=accept" 
+                       style="background-color: #10B981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); min-width: 140px;">
+                      ✅ Accept Price
+                    </a>
+                  </td>
+                  <td style="text-align: center; padding: 10px;">
+                    <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/recycling-center/bookings/${bookingId}/confirm?action=decline" 
+                       style="background-color: #EF4444; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2); min-width: 140px;">
+                      ❌ Decline Price
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Mobile buttons (stacked) -->
+              <div style="display: none; max-width: 300px; margin: 0 auto;">
+                <div style="margin-bottom: 15px;">
+                  <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/recycling-center/bookings/${bookingId}/confirm?action=accept" 
+                     style="background-color: #10B981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); text-align: center; width: 100%; box-sizing: border-box;">
+                    ✅ Accept Price
+                  </a>
+                </div>
+                <div>
+                  <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/recycling-center/bookings/${bookingId}/confirm?action=decline" 
+                     style="background-color: #EF4444; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2); text-align: center; width: 100%; box-sizing: border-box;">
+                    ❌ Decline Price
+                  </a>
+                </div>
+              </div>
+              
+              <div style="margin-top: 20px; padding: 15px; background-color: #fef3c7; border-radius: 5px; border-left: 4px solid #f59e0b;">
+                <p style="margin: 0; color: #92400e; font-size: 13px;">
+                  <strong>Note:</strong> Clicking these buttons will immediately confirm or decline your price. 
+                  You can also log into your account to manage your bookings.
+                </p>
+              </div>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background-color: #f1f5f9; border-radius: 5px; border-left: 4px solid #64748b;">
+              <p style="margin: 0; color: #475569; font-size: 13px;">
+                <strong>Alternative Links:</strong> If the buttons above don't work, you can use these direct links:<br>
+                <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/recycling-center/bookings/${bookingId}/confirm?action=accept" style="color: #10B981; text-decoration: underline;">Accept Price</a> | 
+                <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/recycling-center/bookings/${bookingId}/confirm?action=decline" style="color: #EF4444; text-decoration: underline;">Decline Price</a>
+              </p>
+            </div>
+            
+            <p style="font-size: 12px; color: #666; text-align: center;">
+              Click the buttons above to confirm or decline the quoted price.
+            </p>
+          </div>
+
+          <div class="section">
+            <h3>💳 Payment Confirmation</h3>
+            <p>After confirming the price, you can also confirm that you will pay the amount at the recycling center.</p>
+            <p>This helps the recycling center prepare for your visit and ensures smooth processing.</p>
+            
+            <div style="text-align: center; margin: 30px 0; padding: 20px; background-color: #f0f9ff; border-radius: 8px; border: 2px solid #0ea5e9;">
+              <h3 style="color: #0c4a6e; margin-bottom: 15px; font-size: 18px;">Confirm Payment Intent</h3>
+              <p style="color: #0369a1; margin-bottom: 20px; font-size: 14px;">
+                Please click the button below to confirm that you will pay the quoted amount.
+              </p>
+              
+              <!-- Desktop button -->
+              <table style="width: 100%; max-width: 300px; margin: 0 auto; display: block;">
+                <tr>
+                  <td style="text-align: center; padding: 10px;">
+                    <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/recycling-center/bookings/${bookingId}/confirm-payment?action=confirm" 
+                       style="background-color: #0ea5e9; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(14, 165, 233, 0.2); min-width: 200px;">
+                      💳 Confirm Payment Intent
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Mobile button -->
+              <div style="display: none; max-width: 300px; margin: 0 auto;">
+                <div style="margin-bottom: 15px;">
+                  <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/recycling-center/bookings/${bookingId}/confirm-payment?action=confirm" 
+                     style="background-color: #0ea5e9; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(14, 165, 233, 0.2); text-align: center; width: 100%; box-sizing: border-box;">
+                    💳 Confirm Payment Intent
+                  </a>
+                </div>
+              </div>
+              
+              <div style="margin-top: 20px; padding: 15px; background-color: #ecfdf5; border-radius: 5px; border-left: 4px solid #10b981;">
+                <p style="margin: 0; color: #065f46; font-size: 13px;">
+                  <strong>Note:</strong> This confirms your intent to pay. You will still need to pay the amount at the recycling center when you drop off your materials.
+                </p>
+              </div>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background-color: #f1f5f9; border-radius: 5px; border-left: 4px solid #64748b;">
+              <p style="margin: 0; color: #475569; font-size: 13px;">
+                <strong>Alternative Link:</strong> If the button above doesn't work, you can use this direct link:<br>
+                <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/recycling-center/bookings/${bookingId}/confirm-payment?action=confirm" style="color: #0ea5e9; text-decoration: underline;">Confirm Payment Intent</a>
+              </p>
+            </div>
+            
+            <p style="font-size: 12px; color: #666; text-align: center;">
+              Click the button above to confirm your payment intent.
+            </p>
+          </div>
+
+          <div class="section">
+            <h3>ℹ️ Important Information</h3>
+            <ul>
+              <li>Please arrive on time for your scheduled drop-off</li>
+              <li>Ensure your recyclable materials are clean and properly sorted</li>
+              <li>Bring a valid ID for verification</li>
+              <li>Payment is due at the time of drop-off</li>
+              <li>Contact the recycling center if you need to reschedule</li>
+            </ul>
+          </div>
+
+          <div class="footer">
+            <p>Thank you for choosing Ecotunga for your recycling needs!</p>
+            <p>For support, contact us at support@ecotunga.rw</p>
+            <p>© 2024 Ecotunga. All rights reserved.</p>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+};
+
+// Send approval confirmation email
+const sendApprovalEmail = async (approvalData) => {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_USER || 'your-email@gmail.com',
+      to: approvalData.to,
+      subject: approvalData.subject,
+      html: createApprovalEmailTemplate(approvalData.data)
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Approval confirmation email sent:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Error sending approval confirmation email:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 // Send admin notification email
 const sendAdminNotificationEmail = async (bookingData) => {
   try {
@@ -234,5 +501,7 @@ const sendAdminNotificationEmail = async (bookingData) => {
 module.exports = {
   sendBookingConfirmationEmail,
   sendAdminNotificationEmail,
+  sendApprovalEmail,
+  createApprovalEmailTemplate,
   testSMTPConnection
 }; 

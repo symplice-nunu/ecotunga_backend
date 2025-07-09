@@ -18,7 +18,7 @@ exports.seed = async function (knex) {
   const companies = [
     {
       name: 'EcoClean Rwanda',
-      email: 'info@ecoclean.rw',
+      email: 'recycling.center@example.com', // Match the recycling center user email
       phone: '+250788123456',
       logo: 'https://example.com/ecoclean-logo.png',
       district: 'Kigali',

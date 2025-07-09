@@ -202,21 +202,33 @@ exports.getUserRecyclingCenterBookings = async (req, res) => {
 exports.getRecyclingCenterBookingsByCompany = async (req, res) => {
   try {
     const user_id = req.user.id;
-    console.log('Fetching bookings for user:', user_id);
+    const user_email = req.user.email;
+    const user_role = req.user.role;
     
-    // Get the company owned by the current user
+    console.log('[DEBUG] getRecyclingCenterBookingsByCompany called by user_id:', user_id, 'role:', user_role, 'email:', user_email);
+    
+    // Check if user has recycling_center role
+    if (user_role !== 'recycling_center') {
+      console.log('[DEBUG] User does not have recycling_center role');
+      return res.status(403).json({ 
+        error: 'Access denied. Only recycling center users can access this endpoint.',
+        user_role: user_role
+      });
+    }
+    
+    // Find company by user's email
     const company = await db('companies')
-      .where('user_id', user_id)
+      .where('email', user_email)
       .where('type', 'recycling_center')
       .first();
 
-    console.log('Found company:', company);
+    console.log('[DEBUG] Company found by email:', company);
 
     if (!company) {
-      console.log('No recycling center company found for user:', user_id);
+      console.log('[DEBUG] No recycling center company found for user email:', user_email);
       return res.status(404).json({ 
         error: 'No recycling center found for this user',
-        user_id: user_id
+        user_email: user_email
       });
     }
 
@@ -232,26 +244,34 @@ exports.getRecyclingCenterBookingsByCompany = async (req, res) => {
       )
       .orderBy('rcb.dropoff_date', 'desc');
 
+    console.log('[DEBUG] Found bookings:', bookings.length, 'for company_id:', company.id);
+    if (bookings.length > 0) {
+      bookings.forEach((b, i) => {
+        console.log(`[DEBUG] Booking #${i+1}:`, b);
+      });
+    }
+
     // Parse waste_types for each booking
     bookings.forEach(booking => {
-      if (booking.waste_types) {
+      if (booking.waste_type) {
         try {
-          // MySQL automatically parses JSON, so it might already be an array
-          if (typeof booking.waste_types === 'string') {
-            booking.waste_types = JSON.parse(booking.waste_types);
+          if (typeof booking.waste_type === 'string') {
+            booking.waste_types = JSON.parse(booking.waste_type);
+          } else {
+            booking.waste_types = booking.waste_type;
           }
-          // Ensure it's an array
           if (!Array.isArray(booking.waste_types)) {
             booking.waste_types = [booking.waste_types];
           }
         } catch (error) {
-          console.error('Error parsing booking waste_types:', error);
+          console.error('Error parsing booking waste_type:', error);
           booking.waste_types = [booking.waste_type || 'other'];
         }
+      } else {
+        booking.waste_types = ['other'];
       }
     });
 
-    console.log('Found bookings:', bookings.length);
     res.json({ bookings });
   } catch (error) {
     console.error('Error fetching company recycling center bookings:', error);
@@ -360,6 +380,198 @@ exports.getRecyclingCenterBookingById = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch recycling center booking' });
   }
 }; 
+
+// Approve recycling center booking with pricing
+exports.approveRecyclingCenterBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { price, notes } = req.body;
+    const user_id = req.user.id;
+    const user_role = req.user.role;
+
+    // Check if user has recycling_center role
+    if (user_role !== 'recycling_center') {
+      return res.status(403).json({ 
+        error: 'Access denied. Only recycling center users can approve bookings.',
+        user_role: user_role
+      });
+    }
+
+    // Get the booking with user and company details
+    const booking = await db('recycling_center_bookings as rcb')
+      .join('users as u', 'rcb.user_id', 'u.id')
+      .join('companies as c', 'rcb.company_id', 'c.id')
+      .where('rcb.id', id)
+      .select(
+        'rcb.*',
+        'u.name as user_name',
+        'u.last_name as user_last_name',
+        'u.email as user_email',
+        'c.name as company_name',
+        'c.email as company_email'
+      )
+      .first();
+
+    if (!booking) {
+      return res.status(404).json({ error: 'Recycling center booking not found' });
+    }
+
+    // Validate price
+    if (!price || isNaN(price) || price <= 0) {
+      return res.status(400).json({ error: 'Valid price is required' });
+    }
+
+    // Update booking with approval details
+    await db('recycling_center_bookings')
+      .where('id', id)
+      .update({
+        status: 'approved',
+        price: parseFloat(price),
+        approval_notes: notes || null,
+        approved_at: new Date(),
+        approved_by: user_id
+      });
+
+    // Send confirmation email to user
+    const emailService = require('../services/emailService');
+    
+    const emailData = {
+      to: booking.user_email,
+      subject: 'Your Recycling Booking Has Been Approved!',
+      data: {
+        userName: `${booking.user_name} ${booking.user_last_name}`,
+        companyName: booking.company_name,
+        bookingDate: new Date(booking.dropoff_date).toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }),
+        bookingTime: booking.time_slot,
+        location: `${booking.sector}, ${booking.district}`,
+        price: parseFloat(price).toLocaleString('en-US', {
+          style: 'currency',
+          currency: 'RWF'
+        }),
+        notes: notes || 'No additional notes',
+        bookingId: id,
+        wasteTypes: booking.waste_types ? JSON.parse(booking.waste_types).join(', ') : 'Not specified'
+      }
+    };
+
+    try {
+      await emailService.sendApprovalEmail(emailData);
+      console.log('Approval confirmation email sent to:', booking.user_email);
+    } catch (emailError) {
+      console.error('Error sending approval email:', emailError);
+      // Don't fail the approval if email fails
+    }
+
+    res.json({ 
+      message: 'Recycling center booking approved successfully',
+      bookingId: id,
+      price: parseFloat(price),
+      emailSent: true
+    });
+  } catch (error) {
+    console.error('Error approving recycling center booking:', error);
+    res.status(500).json({ error: 'Failed to approve recycling center booking' });
+  }
+};
+
+// Confirm price for recycling center booking
+exports.confirmRecyclingCenterBookingPrice = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { confirmed } = req.body;
+    const user_id = req.user.id;
+
+    // Get the booking to check if it exists and user has permission
+    const booking = await db('recycling_center_bookings')
+      .where('id', id)
+      .first();
+
+    if (!booking) {
+      return res.status(404).json({ error: 'Recycling center booking not found' });
+    }
+
+    // Check if user has permission to confirm this booking
+    if (booking.user_id !== user_id) {
+      return res.status(403).json({ error: 'Access denied. You can only confirm your own bookings.' });
+    }
+
+    // Check if booking is approved
+    if (booking.status !== 'approved') {
+      return res.status(400).json({ error: 'Booking must be approved before price can be confirmed' });
+    }
+
+    // Update booking with confirmation
+    await db('recycling_center_bookings')
+      .where('id', id)
+      .update({
+        price_confirmed: confirmed,
+        confirmed_at: confirmed ? new Date() : null
+      });
+
+    res.json({ 
+      message: confirmed ? 'Price confirmed successfully' : 'Price confirmation cancelled',
+      bookingId: id,
+      price_confirmed: confirmed
+    });
+  } catch (error) {
+    console.error('Error confirming recycling center booking price:', error);
+    res.status(500).json({ error: 'Failed to confirm booking price' });
+  }
+};
+
+// Confirm payment for recycling center booking
+exports.confirmRecyclingCenterBookingPayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { payment_confirmed } = req.body;
+    const user_id = req.user.id;
+
+    // Get the booking to check if it exists and user has permission
+    const booking = await db('recycling_center_bookings')
+      .where('id', id)
+      .first();
+
+    if (!booking) {
+      return res.status(404).json({ error: 'Recycling center booking not found' });
+    }
+
+    // Check if user has permission to confirm payment for this booking
+    if (booking.user_id !== user_id) {
+      return res.status(403).json({ error: 'Access denied. You can only confirm payment for your own bookings.' });
+    }
+
+    // Check if booking is approved and price is confirmed
+    if (booking.status !== 'approved') {
+      return res.status(400).json({ error: 'Booking must be approved before payment can be confirmed' });
+    }
+
+    if (!booking.price_confirmed) {
+      return res.status(400).json({ error: 'Price must be confirmed before payment can be confirmed' });
+    }
+
+    // Update booking with payment confirmation
+    await db('recycling_center_bookings')
+      .where('id', id)
+      .update({
+        payment_confirmed: payment_confirmed,
+        payment_confirmed_at: payment_confirmed ? new Date() : null
+      });
+
+    res.json({ 
+      message: payment_confirmed ? 'Payment confirmed successfully' : 'Payment confirmation cancelled',
+      bookingId: id,
+      payment_confirmed: payment_confirmed
+    });
+  } catch (error) {
+    console.error('Error confirming recycling center booking payment:', error);
+    res.status(500).json({ error: 'Failed to confirm booking payment' });
+  }
+};
 
 // Cancel recycling center booking
 exports.cancelRecyclingCenterBooking = async (req, res) => {

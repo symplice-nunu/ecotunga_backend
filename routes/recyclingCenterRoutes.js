@@ -18,10 +18,19 @@ router.get('/bookings/company', recyclingCenterController.getRecyclingCenterBook
 // Get all recycling center bookings (for admin users)
 router.get('/bookings', recyclingCenterController.getAllRecyclingCenterBookings);
 
-// Get specific recycling center booking by ID
-router.get('/bookings/:id', recyclingCenterController.getRecyclingCenterBookingById);
+// Approve recycling center booking with pricing
+router.put('/bookings/:id/approve', recyclingCenterController.approveRecyclingCenterBooking);
+
+// Confirm price for recycling center booking
+router.put('/bookings/:id/confirm-price', recyclingCenterController.confirmRecyclingCenterBookingPrice);
+
+// Confirm payment for recycling center booking
+router.put('/bookings/:id/confirm-payment', recyclingCenterController.confirmRecyclingCenterBookingPayment);
 
 // Cancel recycling center booking
 router.delete('/bookings/:id', recyclingCenterController.cancelRecyclingCenterBooking);
+
+// Get specific recycling center booking by ID
+router.get('/bookings/:id', recyclingCenterController.getRecyclingCenterBookingById);
 
 module.exports = router; 
