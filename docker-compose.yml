@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: ecotunga_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-ecotunga}
+      MYSQL_USER: ${DB_USER:-ecotunga_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-ecotunga_password}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+    networks:
+      - ecotunga_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Backend API
+  backend:
+    build: .
+    container_name: ecotunga_backend
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - NODE_ENV=development
+      - PORT=5001
+      - DB_HOST=mysql
+      - DB_USER=${DB_USER:-ecotunga_user}
+      - DB_PASSWORD=${DB_PASSWORD:-ecotunga_password}
+      - DB_NAME=${DB_NAME:-ecotunga}
+      - JWT_SECRET=${JWT_SECRET:-your-secret-key}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/app/uploads
+    networks:
+      - ecotunga_network
+    command: sh -c "npm run migrate && npm start"
+
+volumes:
+  mysql_data:
+
+networks:
+  ecotunga_network:
+    driver: bridge 
