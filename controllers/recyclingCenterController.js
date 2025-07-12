@@ -198,6 +198,30 @@ exports.getUserRecyclingCenterBookings = async (req, res) => {
   }
 };
 
+// Get user's total points from recycling bookings
+exports.getUserPoints = async (req, res) => {
+  try {
+    const user_id = req.user.id;
+    
+    // Get total points from approved bookings where sorted_properly is true
+    const result = await db('recycling_center_bookings')
+      .where('user_id', user_id)
+      .where('status', 'approved')
+      .where('sorted_properly', true)
+      .sum('points as total_points')
+      .first();
+
+    const totalPoints = result.total_points || 0;
+
+    res.json({ 
+      total_points: totalPoints
+    });
+  } catch (error) {
+    console.error('Error fetching user points:', error);
+    res.status(500).json({ error: 'Failed to fetch user points' });
+  }
+};
+
 // Get recycling center bookings by company (for recycling center owners)
 exports.getRecyclingCenterBookingsByCompany = async (req, res) => {
   try {
@@ -385,9 +409,13 @@ exports.getRecyclingCenterBookingById = async (req, res) => {
 exports.approveRecyclingCenterBooking = async (req, res) => {
   try {
     const { id } = req.params;
-    const { price, notes } = req.body;
+    const { price, notes, sorted_properly } = req.body;
     const user_id = req.user.id;
     const user_role = req.user.role;
+
+    // Debug: Log the request body
+    console.log('Approval request body:', req.body);
+    console.log('sorted_properly value:', sorted_properly);
 
     // Check if user has recycling_center role
     if (user_role !== 'recycling_center') {
@@ -421,6 +449,9 @@ exports.approveRecyclingCenterBooking = async (req, res) => {
       return res.status(400).json({ error: 'Valid price is required' });
     }
 
+    // Calculate points based on sorted_properly
+    const points = sorted_properly ? 5 : 0;
+
     // Update booking with approval details
     await db('recycling_center_bookings')
       .where('id', id)
@@ -429,7 +460,9 @@ exports.approveRecyclingCenterBooking = async (req, res) => {
         price: parseFloat(price),
         approval_notes: notes || null,
         approved_at: new Date(),
-        approved_by: user_id
+        approved_by: user_id,
+        sorted_properly: sorted_properly || false,
+        points: points
       });
 
     // Send confirmation email to user
@@ -455,9 +488,15 @@ exports.approveRecyclingCenterBooking = async (req, res) => {
         }),
         notes: notes || 'No additional notes',
         bookingId: id,
-        wasteTypes: booking.waste_types ? JSON.parse(booking.waste_types).join(', ') : 'Not specified'
+        wasteTypes: booking.waste_types ? JSON.parse(booking.waste_types).join(', ') : 'Not specified',
+        sortedProperly: sorted_properly || false,
+        points: points
       }
     };
+
+    // Debug: Log the email data
+    console.log('Email data sortedProperly:', emailData.data.sortedProperly);
+    console.log('Email data points:', emailData.data.points);
 
     try {
       await emailService.sendApprovalEmail(emailData);
@@ -471,6 +510,8 @@ exports.approveRecyclingCenterBooking = async (req, res) => {
       message: 'Recycling center booking approved successfully',
       bookingId: id,
       price: parseFloat(price),
+      sorted_properly: sorted_properly || false,
+      points: points,
       emailSent: true
     });
   } catch (error) {

@@ -1,5 +1,5 @@
 const db = require('../config/db');
-const { sendBookingConfirmationEmail, sendAdminNotificationEmail } = require('../services/emailService');
+const { sendBookingConfirmationEmail, sendApprovalNotificationEmail, sendDenialNotificationEmail } = require('../services/emailService');
 
 // Debug function to check database structure
 exports.debugDatabaseStructure = async (req, res) => {
@@ -165,19 +165,7 @@ exports.createWasteCollection = async (req, res) => {
       // console.error('❌ Error sending booking confirmation email:', emailError);
     }
 
-    // Send notification email to admin
-    try {
-      // console.log('📧 Attempting to send admin notification email');
-      const adminEmailResult = await sendAdminNotificationEmail(bookingData);
-      if (adminEmailResult.success) {
-        // console.log('✅ Admin notification email sent successfully');
-        // console.log('📧 Message ID:', adminEmailResult.messageId);
-      } else {
-        // console.error('❌ Failed to send admin notification email:', adminEmailResult.error);
-      }
-    } catch (adminEmailError) {
-      // console.error('❌ Error sending admin notification email:', adminEmailError);
-    }
+
 
     res.status(201).json({ 
       id,
@@ -473,6 +461,22 @@ exports.approveWasteCollection = async (req, res) => {
     const { admin_notes } = req.body;
     const admin_id = req.user.id;
 
+    // Get the waste collection details before updating
+    const wasteCollection = await db('waste_collection')
+      .leftJoin('companies', 'waste_collection.company_id', 'companies.id')
+      .where('waste_collection.id', id)
+      .select(
+        'waste_collection.*',
+        'companies.name as company_name',
+        'companies.email as company_email',
+        'companies.phone as company_phone'
+      )
+      .first();
+
+    if (!wasteCollection) {
+      return res.status(404).json({ error: 'Waste collection not found' });
+    }
+
     const updated = await db('waste_collection')
       .where('id', id)
       .update({
@@ -483,6 +487,18 @@ exports.approveWasteCollection = async (req, res) => {
 
     if (updated === 0) {
       return res.status(404).json({ error: 'Waste collection not found' });
+    }
+
+    // Send approval notification email
+    try {
+      const emailResult = await sendApprovalNotificationEmail(wasteCollection);
+      if (emailResult.success) {
+        console.log('✅ Approval notification email sent successfully');
+      } else {
+        console.error('❌ Failed to send approval notification email:', emailResult.error);
+      }
+    } catch (emailError) {
+      console.error('❌ Error sending approval notification email:', emailError);
     }
 
     res.json({ message: 'Waste collection approved successfully' });
@@ -499,6 +515,22 @@ exports.denyWasteCollection = async (req, res) => {
     const { admin_notes } = req.body;
     const admin_id = req.user.id;
 
+    // Get the waste collection details before updating
+    const wasteCollection = await db('waste_collection')
+      .leftJoin('companies', 'waste_collection.company_id', 'companies.id')
+      .where('waste_collection.id', id)
+      .select(
+        'waste_collection.*',
+        'companies.name as company_name',
+        'companies.email as company_email',
+        'companies.phone as company_phone'
+      )
+      .first();
+
+    if (!wasteCollection) {
+      return res.status(404).json({ error: 'Waste collection not found' });
+    }
+
     const updated = await db('waste_collection')
       .where('id', id)
       .update({
@@ -509,6 +541,18 @@ exports.denyWasteCollection = async (req, res) => {
 
     if (updated === 0) {
       return res.status(404).json({ error: 'Waste collection not found' });
+    }
+
+    // Send denial notification email
+    try {
+      const emailResult = await sendDenialNotificationEmail(wasteCollection);
+      if (emailResult.success) {
+        console.log('✅ Denial notification email sent successfully');
+      } else {
+        console.error('❌ Failed to send denial notification email:', emailResult.error);
+      }
+    } catch (emailError) {
+      console.error('❌ Error sending denial notification email:', emailError);
     }
 
     res.json({ message: 'Waste collection denied successfully' });

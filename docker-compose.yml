@@ -43,6 +43,8 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM}
+      - FRONTEND_URL=http://62.171.173.62
+    env_file: .env
     depends_on:
       mysql:
         condition: service_healthy

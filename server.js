@@ -23,17 +23,29 @@ const corsOptions = {
     if (!origin) return callback(null, true);
     
     const allowedOrigins = [
+      // Local development
       'http://localhost:3000',
       'http://127.0.0.1:3000',
       'http://localhost:3001',
       'http://127.0.0.1:3001',
       'http://localhost:5001',
-      'http://127.0.0.1:5001'
+      'http://127.0.0.1:5001',
+      // Production server
+      'http://62.171.173.62',
+      'https://62.171.173.62',
+      // Production frontend domains
+      'https://ecotunga-frontend.vercel.app',
+      'https://ecotunga.vercel.app',
+      'https://ecotunga-frontend-git-main.vercel.app',
+      // Add your custom domain if you have one
+      // 'https://yourdomain.com',
+      // 'https://www.yourdomain.com'
     ];
     
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
+      console.log('CORS blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },

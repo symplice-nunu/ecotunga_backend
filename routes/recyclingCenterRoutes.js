@@ -12,6 +12,9 @@ router.post('/bookings', recyclingCenterController.createRecyclingCenterBooking)
 // Get user's recycling center bookings
 router.get('/bookings/user', recyclingCenterController.getUserRecyclingCenterBookings);
 
+// Get user's total points from recycling bookings
+router.get('/bookings/user/points', recyclingCenterController.getUserPoints);
+
 // Get recycling center bookings by company (for recycling center owners)
 router.get('/bookings/company', recyclingCenterController.getRecyclingCenterBookingsByCompany);
 

@@ -200,6 +200,347 @@ const sendBookingConfirmationEmail = async (bookingData) => {
   }
 };
 
+// Create approval notification email template
+const createApprovalNotificationTemplate = (bookingData) => {
+  const {
+    id,
+    name,
+    last_name,
+    email,
+    phone_number,
+    district,
+    sector,
+    cell,
+    street,
+    pickup_date,
+    time_slot,
+    notes,
+    company_name,
+    company_email,
+    company_phone,
+    admin_notes
+  } = bookingData;
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Waste Collection Request Approved</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #10B981; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background-color: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px; }
+        .booking-details { background-color: white; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #10B981; }
+        .section { margin: 20px 0; }
+        .section h3 { color: #10B981; border-bottom: 2px solid #10B981; padding-bottom: 5px; }
+        .detail-row { display: flex; justify-content: space-between; margin: 8px 0; }
+        .label { font-weight: bold; color: #555; }
+        .value { color: #333; }
+        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 14px; }
+        .status-approved { background-color: #d1fae5; color: #065f46; padding: 5px 10px; border-radius: 3px; display: inline-block; }
+        .admin-notes { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 15px 0; border-radius: 5px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>✅ Waste Collection Request Approved</h1>
+          <p>Great news! Your waste collection request has been approved.</p>
+        </div>
+        
+        <div class="content">
+          <div class="booking-details">
+            <h2>Booking #${id}</h2>
+            <span class="status-approved">Status: Approved</span>
+          </div>
+
+          <div class="section">
+            <h3>👤 Personal Information</h3>
+            <div class="detail-row">
+              <span class="label">Full Name:</span>
+              <span class="value">${name} ${last_name}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Email:</span>
+              <span class="value">${email}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Phone:</span>
+              <span class="value">${phone_number}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>📍 Collection Location</h3>
+            <div class="detail-row">
+              <span class="label">District:</span>
+              <span class="value">${district}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Sector:</span>
+              <span class="value">${sector}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Cell:</span>
+              <span class="value">${cell}</span>
+            </div>
+            ${street ? `<div class="detail-row">
+              <span class="label">Street:</span>
+              <span class="value">${street}</span>
+            </div>` : ''}
+          </div>
+
+          <div class="section">
+            <h3>📅 Pickup Details</h3>
+            <div class="detail-row">
+              <span class="label">Pickup Date:</span>
+              <span class="value">${pickup_date}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Time Slot:</span>
+              <span class="value">${time_slot}</span>
+            </div>
+            ${company_name ? `<div class="detail-row">
+              <span class="label">Service Provider:</span>
+              <span class="value">${company_name}</span>
+            </div>` : ''}
+            ${notes ? `<div class="detail-row">
+              <span class="label">Notes:</span>
+              <span class="value">${notes}</span>
+            </div>` : ''}
+          </div>
+
+          ${admin_notes ? `
+          <div class="section">
+            <h3>📝 Admin Notes</h3>
+            <div class="admin-notes">
+              <p><strong>Message from our team:</strong></p>
+              <p>${admin_notes}</p>
+            </div>
+          </div>
+          ` : ''}
+
+          ${company_name ? `
+          <div class="section">
+            <h3>🏢 Service Provider Contact</h3>
+            <div class="detail-row">
+              <span class="label">Company:</span>
+              <span class="value">${company_name}</span>
+            </div>
+            ${company_email ? `<div class="detail-row">
+              <span class="label">Email:</span>
+              <span class="value">${company_email}</span>
+            </div>` : ''}
+            ${company_phone ? `<div class="detail-row">
+              <span class="label">Phone:</span>
+              <span class="value">${company_phone}</span>
+            </div>` : ''}
+          </div>
+          ` : ''}
+
+          <div class="section">
+            <h3>ℹ️ Important Information</h3>
+            <ul>
+              <li>Your waste collection has been approved and is scheduled</li>
+              <li>Please ensure your waste is properly sorted and ready for collection</li>
+              <li>Be available during the scheduled time slot</li>
+              <li>Contact your service provider if you need to reschedule</li>
+              <li>Keep this confirmation for your records</li>
+            </ul>
+          </div>
+
+          <div class="footer">
+            <p>Thank you for choosing Ecotunga for your waste management needs!</p>
+            <p>For support, contact us at support@ecotunga.rw</p>
+            <p>© 2024 Ecotunga. All rights reserved.</p>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+};
+
+// Create denial notification email template
+const createDenialNotificationTemplate = (bookingData) => {
+  const {
+    id,
+    name,
+    last_name,
+    email,
+    phone_number,
+    district,
+    sector,
+    cell,
+    street,
+    pickup_date,
+    time_slot,
+    notes,
+    company_name,
+    company_email,
+    company_phone,
+    admin_notes
+  } = bookingData;
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Waste Collection Request Update</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #EF4444; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background-color: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px; }
+        .booking-details { background-color: white; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #EF4444; }
+        .section { margin: 20px 0; }
+        .section h3 { color: #EF4444; border-bottom: 2px solid #EF4444; padding-bottom: 5px; }
+        .detail-row { display: flex; justify-content: space-between; margin: 8px 0; }
+        .label { font-weight: bold; color: #555; }
+        .value { color: #333; }
+        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 14px; }
+        .status-denied { background-color: #fee2e2; color: #991b1b; padding: 5px 10px; border-radius: 3px; display: inline-block; }
+        .admin-notes { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 15px 0; border-radius: 5px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>❌ Waste Collection Request Update</h1>
+          <p>We regret to inform you that your waste collection request could not be approved.</p>
+        </div>
+        
+        <div class="content">
+          <div class="booking-details">
+            <h2>Booking #${id}</h2>
+            <span class="status-denied">Status: Denied</span>
+          </div>
+
+          <div class="section">
+            <h3>👤 Personal Information</h3>
+            <div class="detail-row">
+              <span class="label">Full Name:</span>
+              <span class="value">${name} ${last_name}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Email:</span>
+              <span class="value">${email}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Phone:</span>
+              <span class="value">${phone_number}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>📍 Collection Location</h3>
+            <div class="detail-row">
+              <span class="label">District:</span>
+              <span class="value">${district}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Sector:</span>
+              <span class="value">${sector}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Cell:</span>
+              <span class="value">${cell}</span>
+            </div>
+            ${street ? `<div class="detail-row">
+              <span class="label">Street:</span>
+              <span class="value">${street}</span>
+            </div>` : ''}
+          </div>
+
+          <div class="section">
+            <h3>📅 Requested Pickup Details</h3>
+            <div class="detail-row">
+              <span class="label">Pickup Date:</span>
+              <span class="value">${pickup_date}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Time Slot:</span>
+              <span class="value">${time_slot}</span>
+            </div>
+            ${company_name ? `<div class="detail-row">
+              <span class="label">Service Provider:</span>
+              <span class="value">${company_name}</span>
+            </div>` : ''}
+            ${notes ? `<div class="detail-row">
+              <span class="label">Notes:</span>
+              <span class="value">${notes}</span>
+            </div>` : ''}
+          </div>
+
+          ${admin_notes ? `
+          <div class="section">
+            <h3>📝 Reason for Denial</h3>
+            <div class="admin-notes">
+              <p><strong>Message from our team:</strong></p>
+              <p>${admin_notes}</p>
+            </div>
+          </div>
+          ` : ''}
+
+          <div class="section">
+            <h3>ℹ️ Next Steps</h3>
+            <ul>
+              <li>You can submit a new waste collection request</li>
+              <li>Please review the reason for denial and make necessary adjustments</li>
+              <li>Contact our support team if you have any questions</li>
+              <li>We're here to help you with proper waste management</li>
+            </ul>
+          </div>
+
+          <div class="footer">
+            <p>Thank you for choosing Ecotunga for your waste management needs!</p>
+            <p>For support, contact us at support@ecotunga.rw</p>
+            <p>© 2024 Ecotunga. All rights reserved.</p>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+};
+
+// Send approval notification email
+const sendApprovalNotificationEmail = async (bookingData) => {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_USER || 'your-email@gmail.com',
+      to: bookingData.email,
+      subject: `Waste Collection Request Approved - #${bookingData.id}`,
+      html: createApprovalNotificationTemplate(bookingData)
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+// Send denial notification email
+const sendDenialNotificationEmail = async (bookingData) => {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_USER || 'your-email@gmail.com',
+      to: bookingData.email,
+      subject: `Waste Collection Request Update - #${bookingData.id}`,
+      html: createDenialNotificationTemplate(bookingData)
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
 // Create approval email template
 const createApprovalEmailTemplate = (approvalData) => {
   const {
@@ -211,8 +552,14 @@ const createApprovalEmailTemplate = (approvalData) => {
     price,
     notes,
     bookingId,
-    wasteTypes
+    wasteTypes,
+    sortedProperly,
+    points
   } = approvalData;
+
+  // Debug: Log the frontend URL being used
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  console.log('🔗 Using frontend URL for email links:', frontendUrl);
 
   return `
     <!DOCTYPE html>
@@ -288,6 +635,16 @@ const createApprovalEmailTemplate = (approvalData) => {
               <span class="label">Waste Types:</span>
               <span class="value">${wasteTypes}</span>
             </div>
+            ${sortedProperly ? `
+            <div class="detail-row">
+              <span class="label">Sorted Properly:</span>
+              <span class="value">✅ Yes</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Points Earned:</span>
+              <span class="value">⭐ ${points} points</span>
+            </div>
+            ` : ''}
           </div>
 
           ${notes ? `
@@ -322,13 +679,13 @@ const createApprovalEmailTemplate = (approvalData) => {
               <table style="width: 100%; max-width: 400px; margin: 0 auto; display: block;">
                 <tr>
                   <td style="text-align: center; padding: 10px;">
-                    <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/recycling-center/bookings/${bookingId}/confirm?action=accept" 
+                    <a href="${frontendUrl}/recycling-center/bookings/${bookingId}/confirm?action=accept" 
                        style="background-color: #10B981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); min-width: 140px;">
                       ✅ Accept Price
                     </a>
                   </td>
                   <td style="text-align: center; padding: 10px;">
-                    <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/recycling-center/bookings/${bookingId}/confirm?action=decline" 
+                    <a href="${frontendUrl}/recycling-center/bookings/${bookingId}/confirm?action=decline" 
                        style="background-color: #EF4444; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2); min-width: 140px;">
                       ❌ Decline Price
                     </a>
@@ -339,13 +696,13 @@ const createApprovalEmailTemplate = (approvalData) => {
               <!-- Mobile buttons (stacked) -->
               <div style="display: none; max-width: 300px; margin: 0 auto;">
                 <div style="margin-bottom: 15px;">
-                  <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/recycling-center/bookings/${bookingId}/confirm?action=accept" 
+                  <a href="${frontendUrl}/recycling-center/bookings/${bookingId}/confirm?action=accept" 
                      style="background-color: #10B981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); text-align: center; width: 100%; box-sizing: border-box;">
                     ✅ Accept Price
                   </a>
                 </div>
                 <div>
-                  <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/recycling-center/bookings/${bookingId}/confirm?action=decline" 
+                  <a href="${frontendUrl}/recycling-center/bookings/${bookingId}/confirm?action=decline" 
                      style="background-color: #EF4444; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2); text-align: center; width: 100%; box-sizing: border-box;">
                     ❌ Decline Price
                   </a>
@@ -363,8 +720,8 @@ const createApprovalEmailTemplate = (approvalData) => {
             <div style="margin-top: 20px; padding: 15px; background-color: #f1f5f9; border-radius: 5px; border-left: 4px solid #64748b;">
               <p style="margin: 0; color: #475569; font-size: 13px;">
                 <strong>Alternative Links:</strong> If the buttons above don't work, you can use these direct links:<br>
-                <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/recycling-center/bookings/${bookingId}/confirm?action=accept" style="color: #10B981; text-decoration: underline;">Accept Price</a> | 
-                <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/recycling-center/bookings/${bookingId}/confirm?action=decline" style="color: #EF4444; text-decoration: underline;">Decline Price</a>
+                  <a href="${frontendUrl}/recycling-center/bookings/${bookingId}/confirm?action=accept" style="color: #10B981; text-decoration: underline;">Accept Price</a> | 
+                  <a href="${frontendUrl}/recycling-center/bookings/${bookingId}/confirm?action=decline" style="color: #EF4444; text-decoration: underline;">Decline Price</a>
               </p>
             </div>
             
@@ -388,7 +745,7 @@ const createApprovalEmailTemplate = (approvalData) => {
               <table style="width: 100%; max-width: 300px; margin: 0 auto; display: block;">
                 <tr>
                   <td style="text-align: center; padding: 10px;">
-                    <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/recycling-center/bookings/${bookingId}/confirm-payment?action=confirm" 
+                    <a href="${frontendUrl}/recycling-center/bookings/${bookingId}/confirm-payment?action=confirm" 
                        style="background-color: #0ea5e9; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(14, 165, 233, 0.2); min-width: 200px;">
                       💳 Confirm Payment Intent
                     </a>
@@ -399,7 +756,7 @@ const createApprovalEmailTemplate = (approvalData) => {
               <!-- Mobile button -->
               <div style="display: none; max-width: 300px; margin: 0 auto;">
                 <div style="margin-bottom: 15px;">
-                  <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/recycling-center/bookings/${bookingId}/confirm-payment?action=confirm" 
+                  <a href="${frontendUrl}/recycling-center/bookings/${bookingId}/confirm-payment?action=confirm" 
                      style="background-color: #0ea5e9; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(14, 165, 233, 0.2); text-align: center; width: 100%; box-sizing: border-box;">
                     💳 Confirm Payment Intent
                   </a>
@@ -416,7 +773,7 @@ const createApprovalEmailTemplate = (approvalData) => {
             <div style="margin-top: 20px; padding: 15px; background-color: #f1f5f9; border-radius: 5px; border-left: 4px solid #64748b;">
               <p style="margin: 0; color: #475569; font-size: 13px;">
                 <strong>Alternative Link:</strong> If the button above doesn't work, you can use this direct link:<br>
-                <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/recycling-center/bookings/${bookingId}/confirm-payment?action=confirm" style="color: #0ea5e9; text-decoration: underline;">Confirm Payment Intent</a>
+                <a href="${frontendUrl}/recycling-center/bookings/${bookingId}/confirm-payment?action=confirm" style="color: #0ea5e9; text-decoration: underline;">Confirm Payment Intent</a>
               </p>
             </div>
             
@@ -467,41 +824,13 @@ const sendApprovalEmail = async (approvalData) => {
   }
 };
 
-// Send admin notification email
-const sendAdminNotificationEmail = async (bookingData) => {
-  try {
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@ecotunga.rw';
-    
-    const mailOptions = {
-      from: process.env.EMAIL_USER || 'your-email@gmail.com',
-      to: adminEmail,
-      subject: `New Waste Collection Booking - #${bookingData.id}`,
-      html: `
-        <h2>New Waste Collection Booking</h2>
-        <p><strong>Booking ID:</strong> ${bookingData.id}</p>
-        <p><strong>Customer:</strong> ${bookingData.name} ${bookingData.last_name}</p>
-        <p><strong>Email:</strong> ${bookingData.email}</p>
-        <p><strong>Phone:</strong> ${bookingData.phone_number}</p>
-        <p><strong>Location:</strong> ${bookingData.district}, ${bookingData.sector}</p>
-        <p><strong>Pickup Date:</strong> ${bookingData.pickup_date}</p>
-        <p><strong>Time Slot:</strong> ${bookingData.time_slot}</p>
-        <p><strong>Company:</strong> ${bookingData.company_name || 'Not specified'}</p>
-      `
-    };
 
-    const info = await transporter.sendMail(mailOptions);
-    // console.log('Admin notification email sent:', info.messageId);
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    // console.error('Error sending admin notification email:', error);
-    return { success: false, error: error.message };
-  }
-};
 
 module.exports = {
   sendBookingConfirmationEmail,
-  sendAdminNotificationEmail,
   sendApprovalEmail,
   createApprovalEmailTemplate,
+  sendApprovalNotificationEmail,
+  sendDenialNotificationEmail,
   testSMTPConnection
 }; 
