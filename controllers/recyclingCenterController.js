@@ -1,5 +1,85 @@
 const db = require('../config/db');
 
+// Helper function to format dates consistently
+const formatDateForStorage = (dateString) => {
+  if (!dateString) return null;
+  
+  // If it's already a Date object, convert to YYYY-MM-DD
+  if (dateString instanceof Date) {
+    return dateString.toISOString().split('T')[0];
+  }
+  
+  // If it's a string, try to parse it
+  if (typeof dateString === 'string') {
+    // Handle simple date strings (YYYY-MM-DD) - treat as local date
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return dateString;
+    }
+    
+    // Handle ISO date strings with timezone (Z)
+    if (dateString.includes('T') && dateString.includes('Z')) {
+      const date = new Date(dateString);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+      }
+    }
+    
+    // Handle ISO date strings without timezone - treat as local date
+    if (dateString.includes('T') && !dateString.includes('Z')) {
+      // Extract just the date part and treat as local
+      const datePart = dateString.split('T')[0];
+      if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+        return datePart;
+      }
+    }
+    
+    // Try to parse other date formats
+    const date = new Date(dateString);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split('T')[0];
+    }
+  }
+  
+  return null;
+};
+
+// Helper function to format dates for response
+const formatDateForResponse = (dateValue) => {
+  if (!dateValue) return null;
+  
+  // If it's a Date object, convert to YYYY-MM-DD
+  if (dateValue instanceof Date) {
+    return dateValue.toISOString().split('T')[0];
+  }
+  
+  // If it's a string, ensure it's in YYYY-MM-DD format
+  if (typeof dateValue === 'string') {
+    // If it's already in YYYY-MM-DD format, return as is
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+      return dateValue;
+    }
+    
+    // Handle ISO date strings with timezone (Z)
+    if (dateValue.includes('T') && dateValue.includes('Z')) {
+      const date = new Date(dateValue);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+      }
+    }
+    
+    // Handle ISO date strings without timezone - treat as local date
+    if (dateValue.includes('T') && !dateValue.includes('Z')) {
+      // Extract just the date part and treat as local
+      const datePart = dateValue.split('T')[0];
+      if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+        return datePart;
+      }
+    }
+  }
+  
+  return dateValue;
+};
+
 // Create recycling center booking
 exports.createRecyclingCenterBooking = async (req, res) => {
   try {
@@ -92,7 +172,7 @@ exports.createRecyclingCenterBooking = async (req, res) => {
     const insertData = {
       user_id,
       company_id,
-      dropoff_date,
+      dropoff_date: formatDateForStorage(dropoff_date),
       time_slot,
       notes: notes || null,
       district,
@@ -121,6 +201,11 @@ exports.createRecyclingCenterBooking = async (req, res) => {
         'u.email as user_email'
       )
       .first();
+
+    // Format date for consistent response
+    if (booking) {
+      booking.dropoff_date = formatDateForResponse(booking.dropoff_date);
+    }
 
     // Parse waste_type if it exists (now contains JSON array of waste types)
     if (booking && booking.waste_type) {
@@ -172,8 +257,11 @@ exports.getUserRecyclingCenterBookings = async (req, res) => {
       )
       .orderBy('rcb.dropoff_date', 'desc');
 
-    // Parse waste_types for each booking
+    // Format dates and parse waste_types for each booking
     bookings.forEach(booking => {
+      // Format date for consistent response
+      booking.dropoff_date = formatDateForResponse(booking.dropoff_date);
+      
       if (booking.waste_types) {
         try {
           // MySQL automatically parses JSON, so it might already be an array
@@ -275,8 +363,11 @@ exports.getRecyclingCenterBookingsByCompany = async (req, res) => {
       });
     }
 
-    // Parse waste_types for each booking
+    // Format dates and parse waste_types for each booking
     bookings.forEach(booking => {
+      // Format date for consistent response
+      booking.dropoff_date = formatDateForResponse(booking.dropoff_date);
+      
       if (booking.waste_type) {
         try {
           if (typeof booking.waste_type === 'string') {
@@ -324,8 +415,11 @@ exports.getAllRecyclingCenterBookings = async (req, res) => {
       )
       .orderBy('rcb.dropoff_date', 'desc');
 
-    // Parse waste_types for each booking
+    // Format dates and parse waste_types for each booking
     bookings.forEach(booking => {
+      // Format date for consistent response
+      booking.dropoff_date = formatDateForResponse(booking.dropoff_date);
+      
       if (booking.waste_types) {
         try {
           // MySQL automatically parses JSON, so it might already be an array

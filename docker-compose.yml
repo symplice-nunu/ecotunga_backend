@@ -52,7 +52,7 @@ services:
       - ./uploads:/app/uploads
     networks:
       - ecotunga_network
-    command: sh -c "npm run migrate && npm start"
+    command: sh -c "npm start"
 
 volumes:
   mysql_data:
