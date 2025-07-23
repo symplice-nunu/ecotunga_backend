@@ -64,53 +64,16 @@ exports.debugDatabaseStructure = async (req, res) => {
 exports.createWasteCollection = async (req, res) => {
   try {
     const {
-      name,
-      last_name,
-      gender,
-      email,
-      phone_number,
-      ubudehe_category,
-      house_number,
-      district,
-      sector,
-      cell,
-      street,
-      company_id,
-      pickup_date,
-      time_slot,
+      name, last_name, gender, email, phone_number, ubudehe_category, house_number, district, sector, cell, street, company_id, pickup_date, time_slot,
       notes
     } = req.body;
     const user_id = req.user.id;
-
-    // console.log('createWasteCollection called with data:', req.body);
-    // console.log('house_number from request:', house_number);
-
     const insertData = {
-      user_id,
-      name,
-      last_name,
-      gender,
-      email,
-      phone_number,
-      ubudehe_category,
-      house_number,
-      district,
-      sector,
-      cell,
-      street,
-      company_id,
-      pickup_date,
-      time_slot,
+      user_id,name,last_name,gender,email,phone_number,ubudehe_category,house_number,district,sector,cell,street,company_id,pickup_date,time_slot,
       notes
     };
 
-    // console.log('Insert data being sent to database:', insertData);
-
     const [id] = await db('waste_collection').insert(insertData);
-
-    // console.log('Waste collection created with ID:', id);
-
-    // Get company information for email
     let companyInfo = {};
     if (company_id) {
       try {
@@ -130,43 +93,17 @@ exports.createWasteCollection = async (req, res) => {
         console.error('Error fetching company info for email:', companyError);
       }
     }
-
-    // Prepare booking data for email
     const bookingData = {
-      id,
-      name,
-      last_name,
-      gender,
-      email,
-      phone_number,
-      ubudehe_category,
-      house_number,
-      district,
-      sector,
-      cell,
-      street,
-      pickup_date,
-      time_slot,
-      notes,
+      id,name,last_name,gender,email,phone_number,ubudehe_category,house_number,district,sector,cell,street,pickup_date,time_slot,notes,
       ...companyInfo
     };
-
-    // Send confirmation email to customer
     try {
-      // console.log('📧 Attempting to send booking confirmation email to:', email);
       const emailResult = await sendBookingConfirmationEmail(bookingData);
       if (emailResult.success) {
-        // console.log('✅ Booking confirmation email sent successfully');
-        // console.log('📧 Message ID:', emailResult.messageId);
       } else {
-        // console.error('❌ Failed to send booking confirmation email:', emailResult.error);
       }
     } catch (emailError) {
-      // console.error('❌ Error sending booking confirmation email:', emailError);
     }
-
-
-
     res.status(201).json({ 
       id,
       message: 'Waste collection booking created successfully. Confirmation email sent.',

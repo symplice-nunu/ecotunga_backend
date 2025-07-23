@@ -10,18 +10,24 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASSWORD || 'your-app-password'
   },
   tls: {
-    rejectUnauthorized: false // Only use this in development
+    rejectUnauthorized: process.env.NODE_ENV === 'development' ? false : true
   }
 });
 
 // Test SMTP connection
 const testSMTPConnection = async () => {
   try {
+    console.log('🔧 Testing SMTP connection...');
+    console.log('📧 SMTP Host:', process.env.SMTP_HOST);
+    console.log('🔌 SMTP Port:', process.env.SMTP_PORT);
+    console.log('👤 Email User:', process.env.EMAIL_USER);
+    console.log('🔒 Email Password:', process.env.EMAIL_PASSWORD ? '***SET***' : '***NOT SET***');
+    
     await transporter.verify();
-    // console.log('✅ SMTP connection successful');
+    console.log('✅ SMTP connection successful');
     return { success: true, message: 'SMTP connection successful' };
   } catch (error) {
-    // console.error('❌ SMTP connection failed:', error.message);
+    console.error('❌ SMTP connection failed:', error.message);
     return { success: false, error: error.message };
   }
 };
@@ -184,6 +190,8 @@ const createBookingEmailTemplate = (bookingData) => {
 // Send booking confirmation email
 const sendBookingConfirmationEmail = async (bookingData) => {
   try {
+    console.log('📧 Sending booking confirmation email to:', bookingData.email);
+    
     const mailOptions = {
       from: process.env.EMAIL_USER || 'your-email@gmail.com',
       to: bookingData.email,
@@ -192,10 +200,10 @@ const sendBookingConfirmationEmail = async (bookingData) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    // console.log('Booking confirmation email sent:', info.messageId);
+    console.log('✅ Booking confirmation email sent:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    // console.error('Error sending booking confirmation email:', error);
+    console.error('❌ Error sending booking confirmation email:', error);
     return { success: false, error: error.message };
   }
 };
