@@ -119,6 +119,11 @@ const receiptRoutes = require('./routes/receiptRoutes');
 console.log('Mounting receipt routes...');
 app.use('/api/receipts', receiptRoutes);
 
+// Pricing routes
+const pricingRoutes = require('./routes/pricingRoutes');
+console.log('Mounting pricing routes...');
+app.use('/api/pricing', pricingRoutes);
+
 // Test the route mounting
 app.get('/api/test', (req, res) => {
   res.json({ message: 'API routes are working!' });
