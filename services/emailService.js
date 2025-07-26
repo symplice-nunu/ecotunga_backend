@@ -6,8 +6,8 @@ const transporter = nodemailer.createTransport({
   port: process.env.SMTP_PORT || 587,
   secure: process.env.SMTP_SECURE === 'true' ? true : false, // true for 465, false for other ports
   auth: {
-    user: process.env.EMAIL_USER || 'your-email@gmail.com',
-    pass: process.env.EMAIL_PASSWORD || 'your-app-password'
+    user: process.env.SMTP_USER || process.env.EMAIL_USER || 'your-email@gmail.com',
+    pass: process.env.SMTP_PASS || process.env.EMAIL_PASSWORD || 'your-app-password'
   },
   tls: {
     rejectUnauthorized: process.env.NODE_ENV === 'development' ? false : true
@@ -20,8 +20,8 @@ const testSMTPConnection = async () => {
     console.log('🔧 Testing SMTP connection...');
     console.log('📧 SMTP Host:', process.env.SMTP_HOST);
     console.log('🔌 SMTP Port:', process.env.SMTP_PORT);
-    console.log('👤 Email User:', process.env.EMAIL_USER);
-    console.log('🔒 Email Password:', process.env.EMAIL_PASSWORD ? '***SET***' : '***NOT SET***');
+    console.log('👤 Email User:', process.env.SMTP_USER || process.env.EMAIL_USER);
+    console.log('🔒 Email Password:', (process.env.SMTP_PASS || process.env.EMAIL_PASSWORD) ? '***SET***' : '***NOT SET***');
     
     await transporter.verify();
     console.log('✅ SMTP connection successful');
@@ -519,7 +519,7 @@ const createDenialNotificationTemplate = (bookingData) => {
 const sendApprovalNotificationEmail = async (bookingData) => {
   try {
     const mailOptions = {
-      from: process.env.EMAIL_USER || 'your-email@gmail.com',
+      from: process.env.SMTP_USER || process.env.EMAIL_USER || 'your-email@gmail.com',
       to: bookingData.email,
       subject: `Waste Collection Request Approved - #${bookingData.id}`,
       html: createApprovalNotificationTemplate(bookingData)
@@ -536,7 +536,7 @@ const sendApprovalNotificationEmail = async (bookingData) => {
 const sendDenialNotificationEmail = async (bookingData) => {
   try {
     const mailOptions = {
-      from: process.env.EMAIL_USER || 'your-email@gmail.com',
+      from: process.env.SMTP_USER || process.env.EMAIL_USER || 'your-email@gmail.com',
       to: bookingData.email,
       subject: `Waste Collection Request Update - #${bookingData.id}`,
       html: createDenialNotificationTemplate(bookingData)
@@ -817,7 +817,7 @@ const createApprovalEmailTemplate = (approvalData) => {
 const sendApprovalEmail = async (approvalData) => {
   try {
     const mailOptions = {
-      from: process.env.EMAIL_USER || 'your-email@gmail.com',
+      from: process.env.SMTP_USER || process.env.EMAIL_USER || 'your-email@gmail.com',
       to: approvalData.to,
       subject: approvalData.subject,
       html: createApprovalEmailTemplate(approvalData.data)
@@ -832,7 +832,194 @@ const sendApprovalEmail = async (approvalData) => {
   }
 };
 
+// Send waste collection payment confirmation email
+const sendWasteCollectionPaymentEmail = async (wasteCollectionData) => {
+  try {
+    const mailOptions = {
+      from: process.env.SMTP_USER || process.env.EMAIL_USER || 'your-email@gmail.com',
+      to: wasteCollectionData.to,
+      subject: wasteCollectionData.subject,
+      html: createWasteCollectionPaymentTemplate(wasteCollectionData.data)
+    };
 
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Waste collection payment confirmation email sent:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Error sending waste collection payment confirmation email:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Create waste collection payment confirmation email template
+const createWasteCollectionPaymentTemplate = (wasteCollectionData) => {
+  const {
+    userName,
+    bookingId,
+    bookingDate,
+    bookingTime,
+    price,
+    district,
+    sector,
+    cell,
+    street
+  } = wasteCollectionData;
+
+  // Debug: Log the frontend URL being used
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  console.log('🔗 Using frontend URL for email links:', frontendUrl);
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Waste Collection Payment Confirmation</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #0C9488; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background-color: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px; }
+        .booking-details { background-color: white; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #0C9488; }
+        .section { margin: 20px 0; }
+        .section h3 { color: #0C9488; border-bottom: 2px solid #0C9488; padding-bottom: 5px; }
+        .detail-row { display: flex; justify-content: space-between; margin: 8px 0; }
+        .label { font-weight: bold; color: #555; }
+        .value { color: #333; }
+        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 14px; }
+        .status-approved { background-color: #d1fae5; color: #065f46; padding: 5px 10px; border-radius: 3px; display: inline-block; }
+        .price-highlight { background-color: #fef3c7; color: #92400e; padding: 10px; border-radius: 5px; text-align: center; font-size: 18px; font-weight: bold; margin: 15px 0; }
+        
+        /* Mobile responsiveness */
+        @media only screen and (max-width: 600px) {
+          .container { padding: 10px; }
+          .content { padding: 15px; }
+          .detail-row { flex-direction: column; }
+          .label, .value { margin: 2px 0; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🗑️ Waste Collection Payment Confirmation</h1>
+          <p>Please confirm your payment intent for the approved waste collection request.</p>
+        </div>
+        
+        <div class="content">
+          <div class="booking-details">
+            <h2>Collection #${bookingId}</h2>
+            <span class="status-approved">Status: Approved - Payment Confirmation Required</span>
+          </div>
+
+          <div class="price-highlight">
+            💰 Total Price: ${price}
+          </div>
+
+          <div class="section">
+            <h3>📋 Collection Details</h3>
+            <div class="detail-row">
+              <span class="label">Customer:</span>
+              <span class="value">${userName}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Pickup Date:</span>
+              <span class="value">${bookingDate}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Time Slot:</span>
+              <span class="value">${bookingTime}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>📍 Collection Location</h3>
+            <div class="detail-row">
+              <span class="label">District:</span>
+              <span class="value">${district}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Sector:</span>
+              <span class="value">${sector}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Cell:</span>
+              <span class="value">${cell}</span>
+            </div>
+            ${street ? `<div class="detail-row">
+              <span class="label">Street:</span>
+              <span class="value">${street}</span>
+            </div>` : ''}
+          </div>
+
+          <div class="section">
+            <h3>💰 Price Confirmation</h3>
+            <p>Please confirm that you accept the quoted price of <strong>${price}</strong>.</p>
+            <p>If you have any questions about the pricing, please contact the waste collection company directly.</p>
+            
+            <div style="text-align: center; margin: 30px 0; padding: 20px; background-color: #f8fafc; border-radius: 8px;">
+              <h3 style="color: #1f2937; margin-bottom: 15px; font-size: 18px;">Confirm Your Payment</h3>
+              <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;">
+                Please click one of the buttons below to confirm or decline the quoted price.
+              </p>
+              
+              <!-- Desktop buttons -->
+              <table style="width: 100%; max-width: 400px; margin: 0 auto; display: block;">
+                <tr>
+                  <td style="text-align: center; padding: 10px;">
+                    <a href="${frontendUrl}/waste-collections/${bookingId}/confirm-payment?action=accept" 
+                       style="background-color: #10B981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); min-width: 140px;">
+                      ✅ Accept Price
+                    </a>
+                  </td>
+                  <td style="text-align: center; padding: 10px;">
+                    <a href="${frontendUrl}/waste-collections/${bookingId}/confirm-payment?action=decline" 
+                       style="background-color: #EF4444; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2); min-width: 140px;">
+                      ❌ Decline Price
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Mobile buttons -->
+              <div style="display: none; max-width: 400px; margin: 0 auto;">
+                <div style="margin-bottom: 15px;">
+                  <a href="${frontendUrl}/waste-collections/${bookingId}/confirm-payment?action=accept" 
+                     style="background-color: #10B981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); text-align: center; width: 100%; box-sizing: border-box;">
+                    ✅ Accept Price
+                  </a>
+                </div>
+                <div>
+                  <a href="${frontendUrl}/waste-collections/${bookingId}/confirm-payment?action=decline" 
+                     style="background-color: #EF4444; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2); text-align: center; width: 100%; box-sizing: border-box;">
+                    ❌ Decline Price
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>✅ Next Steps</h3>
+            <ol>
+              <li><strong>Confirm Price:</strong> Click "Accept Price" above to confirm the quoted amount</li>
+              <li><strong>Prepare Waste:</strong> Sort your waste materials properly</li>
+              <li><strong>Collection:</strong> Wait for the waste collection team on the scheduled date</li>
+              <li><strong>Payment:</strong> Pay the confirmed amount when the team arrives</li>
+            </ol>
+          </div>
+
+          <div class="footer">
+            <p>Thank you for choosing Ecotunga for your waste collection needs!</p>
+            <p>For support, contact us at support@ecotunga.rw</p>
+            <p>© 2024 Ecotunga. All rights reserved.</p>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+};
 
 module.exports = {
   sendBookingConfirmationEmail,
@@ -840,5 +1027,7 @@ module.exports = {
   createApprovalEmailTemplate,
   sendApprovalNotificationEmail,
   sendDenialNotificationEmail,
+  sendWasteCollectionPaymentEmail,
+  createWasteCollectionPaymentTemplate,
   testSMTPConnection
 }; 

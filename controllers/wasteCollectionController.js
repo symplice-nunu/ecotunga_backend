@@ -438,6 +438,41 @@ exports.approveWasteCollection = async (req, res) => {
       console.error('❌ Error sending approval notification email:', emailError);
     }
 
+    // Send payment confirmation request email to user
+    console.log('🔄 Starting payment confirmation email process...');
+    try {
+      const { email, id, name, last_name, pickup_date, time_slot, price, district, sector, cell, street } = wasteCollection;
+      console.log('📋 Extracted waste collection data:', { email, id, name, last_name, pickup_date, time_slot, price, district, sector, cell, street });
+      
+      const paymentEmailData = {
+        to: email,
+        subject: `Please Confirm Your Payment Intent for Waste Collection #${id}`,
+        data: {
+          userName: name + (last_name ? ' ' + last_name : ''),
+          bookingId: id,
+          bookingDate: pickup_date,
+          bookingTime: time_slot,
+          price: price || '5000 RWF', // Default price if not set
+          district: district,
+          sector: sector,
+          cell: cell,
+          street: street
+        }
+      };
+      console.log('📧 Prepared payment email data:', paymentEmailData);
+      
+      const paymentEmailResult = await require('../services/emailService').sendWasteCollectionPaymentEmail(paymentEmailData);
+      if (paymentEmailResult.success) {
+        console.log('✅ Payment confirmation request email sent successfully');
+        console.log('📨 Message ID:', paymentEmailResult.messageId);
+      } else {
+        console.error('❌ Failed to send payment confirmation request email:', paymentEmailResult.error);
+      }
+    } catch (paymentEmailError) {
+      console.error('❌ Error sending payment confirmation request email:', paymentEmailError);
+      console.error('🚨 Stack trace:', paymentEmailError.stack);
+    }
+
     res.json({ message: 'Waste collection approved successfully' });
   } catch (error) {
     console.error(error);
